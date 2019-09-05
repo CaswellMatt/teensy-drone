@@ -28,8 +28,8 @@ class Vector {
     };
 
     bool operator != (const Vector& rhs) {
-      return v0 != rhs.v0 &&
-             v1 != rhs.v1 &&
+      return v0 != rhs.v0 ||
+             v1 != rhs.v1 ||
              v2 != rhs.v2;
     };
 

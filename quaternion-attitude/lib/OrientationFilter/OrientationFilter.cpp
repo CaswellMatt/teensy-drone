@@ -25,8 +25,13 @@ void OrientationFilter::update(float deltaT) {
              = calculateDeltaAccelerationQuaternion(gravity.asUnit());
  
 
+  // Serial.print(gravity.v0);Serial.print(" ");
+  // Serial.print(gravity.v1);Serial.print(" ");
+  // Serial.print(gravity.v2);Serial.print(" ");
 
-  float32_t error = abs(gravity.magnitude() - g) / g;
+  float32_t error = abs(marg.acceleration.magnitude() - g) / g;
+
+  // Serial.println(error);Serial.print(" error ");
 
   auto gainFactor = [](float32_t error, float32_t lowerBound, float32_t upperBound) -> float32_t {
     if (error < lowerBound) {
@@ -38,47 +43,22 @@ void OrientationFilter::update(float deltaT) {
     }
   };
 
+  static float32_t previousGain = 0;
+  float32_t gain = gainFactor(error, 0.1, 0.2);
 
-  static long printTimer = micros();
-
-
-  // if (micros() - printTimer > 50000) {
-  //   printTimer = micros();
-
-    // Serial.print(gravity.v0, 5);Serial.print(" ");
-    // Serial.print(gravity.v1, 5);Serial.print(" ");
-    // Serial.print(error, 5);Serial.print(" ");
-
-    // Serial.print(orientationChangeAcceleration.q0, 5);Serial.print(" ");
-    // Serial.print(orientationChangeAcceleration.q1, 5);Serial.print(" ");
-    // Serial.print(orientationChangeAcceleration.q2, 5);Serial.print(" ");
-    // Serial.print(orientationChangeAcceleration.q3, 5);Serial.print(" ");
-
-    Serial.print(marg.acceleration.v0, 5);Serial.print(" ");
-    Serial.print(marg.acceleration.v1, 5);Serial.print(" ");
-    Serial.print(marg.acceleration.v2, 5);Serial.print(" ");
-
-    Serial.print(marg.magnetics.v0, 5);Serial.print(" ");
-    Serial.print(marg.magnetics.v1, 5);Serial.print(" ");
-    Serial.print(marg.magnetics.v2, 5);Serial.print(" ");
-
-    Serial.print(marg.rotationalRates.v0, 5);Serial.print(" ");
-    Serial.print(marg.rotationalRates.v1, 5);Serial.print(" ");
-    Serial.print(marg.rotationalRates.v2, 5);Serial.print(" ");
-
-    // Serial.print(orientation.q0, 5);Serial.print(" ");
-    // Serial.print(orientation.q1, 5);Serial.print(" ");
-    // Serial.print(orientation.q2, 5);Serial.print(" ");
-    // Serial.print(orientation.q3, 5);Serial.print(" ");
-
-    Serial.println();
-  // }
-
-
+  //check for random error when in high acceleration movement
+  //so you dont trust incorrect values if the previous value
+  //was not trusted and has low gain
+  if (gain > 0.6) {
+   if (previousGain < 0.3) gain = 0;
+  }
+  previousGain = gain;
+  float32_t alpha = 0.05;
+  float32_t alphaAdaptive = gain * alpha;
 
   Quaternion complimentaryOrientationForChangeInAcceleration
              = calculateComplementaryQuaternion(orientationChangeAcceleration,
-                                                gainFactor(error, 0.1, 0.2));
+                                                alphaAdaptive);
 
   Quaternion orientationPrime = orientationGyro.multiply(
     complimentaryOrientationForChangeInAcceleration
@@ -88,13 +68,25 @@ void OrientationFilter::update(float deltaT) {
 
     float32_t error = abs(marg.magnetics.magnitude() - 1);
 
+    // Serial.println(error);
+
+
+
     Vector magneticNorth = orientationPrime.conjugate().rotate(marg.magnetics.asUnit());
+
+    // Serial.print(magneticNorth.v0, 5);Serial.print(" ");
+    // Serial.print(magneticNorth.v1, 5);Serial.print(" ");
+    // Serial.print(magneticNorth.v2, 5);Serial.print(" ");
+
+    // Serial.println(error);
 
     Quaternion orientationChangeMagnetics
               = calculateDeltaMagneticsQuaternion(magneticNorth);
 
+  float32_t alpha = 0.3;
+  float32_t alphaAdaptive = gainFactor(error, 0.1, 0.2) * alpha;
     Quaternion complimentaryOrientationForChangeInMagnetics
-              = calculateComplementaryQuaternion(orientationChangeMagnetics, 1.0f);
+              = calculateComplementaryQuaternion(orientationChangeMagnetics, alphaAdaptive);
 
 
     orientation = orientationPrime.multiply(
@@ -104,6 +96,45 @@ void OrientationFilter::update(float deltaT) {
   } else {
     orientation = orientationPrime;
   }
+
+
+  static long printTimer = micros();
+
+
+  if (micros() - printTimer > 20000) {
+    printTimer = micros();
+
+  // Serial.print(gain);;Serial.print(" ");
+  //   Serial.print(magneticNorth.v0, 5);Serial.print(" ");
+  //   Serial.print(magneticNorth.v1, 5);Serial.print(" ");
+  //   Serial.print(magneticNorth.v2, 5);Serial.print(" ");
+
+    // Serial.print(complimentaryOrientationForChangeInAcceleration.q0, 5);Serial.print(" ");
+    // Serial.print(complimentaryOrientationForChangeInAcceleration.q1, 5);Serial.print(" ");
+    // Serial.print(complimentaryOrientationForChangeInAcceleration.q2, 5);Serial.print(" ");
+    // Serial.print(complimentaryOrientationForChangeInAcceleration.q3, 5);Serial.print(" ");
+
+    // Serial.print(marg.acceleration.v0, 5);Serial.print(" ");
+    // Serial.print(marg.acceleration.v1, 5);Serial.print(" ");
+    // Serial.print(marg.acceleration.v2, 5);Serial.print(" ");
+
+    // Serial.print(marg.magnetics.v0, 5);Serial.print(" ");
+    // Serial.print(marg.magnetics.v1, 5);Serial.print(" ");
+    // Serial.print(marg.magnetics.v2, 5);Serial.print(" ");
+      
+
+    // Serial.print(marg.rotationalRates.v0, 5);Serial.print(" ");
+    // Serial.print(marg.rotationalRates.v1, 5);Serial.print(" ");
+    // Serial.print(marg.rotationalRates.v2, 5);Serial.print(" ");
+
+    Serial.print(orientation.q0, 5);Serial.print(" ");
+    Serial.print(orientation.q1, 5);Serial.print(" ");
+    Serial.print(orientation.q2, 5);Serial.print(" ");
+    Serial.print(orientation.q3, 5);Serial.print(" ");
+
+    Serial.println();
+  }
+
   
 
   magneticsPrevious = marg.magnetics;
@@ -190,14 +221,10 @@ Quaternion OrientationFilter::sphericalInterpolation(Quaternion q, float32_t alp
 
 };
 
-
-Quaternion OrientationFilter::calculateComplementaryQuaternion(Quaternion q, float32_t gainFactor) {
-  float32_t alpha = 0.1;
-  float32_t alphaAdaptive = gainFactor * alpha;
-
+Quaternion OrientationFilter::calculateComplementaryQuaternion(Quaternion q, float32_t alpha) {
   if (q.q0 < 0.9) {
-    return sphericalInterpolation(q, alphaAdaptive);
+    return sphericalInterpolation(q, alpha);
   } else {
-    return linearInterpolation(q, alphaAdaptive);
+    return linearInterpolation(q, alpha);
   }
 };
