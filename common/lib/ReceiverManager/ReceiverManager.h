@@ -7,29 +7,40 @@
 
 
   class ReceiverAligner {
-    const int widthFromOneThousandToTwoThousandMicros = 1000;
+
   public:
     ReceiverAligner(ReceiverPulseTimer* receiverTimer, float32_t minValue, float32_t maxValue, float32_t midValue) : 
-      timer(receiverTimer) {
-      min = minValue;
-      max = maxValue;
-      mid = midValue;
-    }
+      timer(receiverTimer),
+      min(minValue),
+      max(maxValue),
+      mid(midValue) {};
 
     ReceiverPulseTimer* timer;
-
-    float32_t min;
-    float32_t max;
-    float32_t mid;
-
-    float32_t getPulseLength() {
+    float32_t getPulseLength(float32_t& startMapped, 
+                             float32_t& midMapped, 
+                             float32_t& endMapped) {
       float32_t pulse = timer->getPulseLength() < mid ? 
-        map(timer->getPulseLength(), min, mid, 1000, 1500) : 
-        map(timer->getPulseLength(), mid, max, 1500, 2000); 
+        map(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
+        map(timer->getPulseLength(), mid, max, midMapped, endMapped); 
 
       return pulse;
     }
 
+    float32_t getPulseLength() {
+      float32_t startMapped  = 125;
+      float32_t endMapped    = 250;
+      float32_t midMapped = (startMapped + endMapped) / 2;
+      float32_t pulse = timer->getPulseLength() < mid ? 
+        map(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
+        map(timer->getPulseLength(), mid, max, midMapped, endMapped); 
+
+      return pulse;
+    }
+
+  private:
+    float32_t min;
+    float32_t max;
+    float32_t mid;
     
   };
 

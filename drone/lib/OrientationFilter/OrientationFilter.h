@@ -1,8 +1,8 @@
 #ifndef _ORIENTATION_FILTER_H
 #define _ORIENTATION_FILTER_H
 #include "MARG.h"
-#include "Quaternion.h"
 #include <Arduino.h>
+#include "Quaternion.h"
 #include <arm_math.h>
 
 class OrientationFilter {
@@ -10,9 +10,15 @@ class OrientationFilter {
   public:
     OrientationFilter();
 
+    void update(float deltat);
+
+  private:
     MARG marg;
 
-    void update(float deltat);
+    Quaternion orientationGyro;
+    Quaternion orientation;
+
+    Vector magneticsPrevious;
     Quaternion calculateAccelerationQuaternion(Vector acceleration);
 
     Quaternion calculateDeltaAccelerationQuaternion(Vector gravityUnit);
@@ -22,11 +28,6 @@ class OrientationFilter {
     Quaternion sphericalInterpolation(Quaternion q, float32_t alpha);
 
     Quaternion calculateComplementaryQuaternion(Quaternion q, float32_t gainFactor) ;
-
-    Quaternion orientationGyro;
-    Quaternion orientation;
-
-    Vector magneticsPrevious;
 
 };
 #endif

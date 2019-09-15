@@ -17,9 +17,7 @@ void OrientationFilter::update(float deltaT) {
   orientationGyro = orientation.add(changeInOrientationForGyro).asUnit();
 
   // rotate acceleration back relative to ground with conjugate
-  Vector gravity = orientationGyro.conjugate().rotate(marg.acceleration);
-
-
+  Vector gravity = orientationGyro.conjugate().rotate(marg.getAcceleration());
 
   Quaternion orientationChangeAcceleration
              = calculateDeltaAccelerationQuaternion(gravity.asUnit());

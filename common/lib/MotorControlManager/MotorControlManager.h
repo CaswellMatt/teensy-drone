@@ -25,10 +25,10 @@ public:
 
 };
 
-#define FRONT_LEFT_MOTOR_PIN 23
-#define FRONT_RIGHT_MOTOR_PIN 22
-#define BACK_LEFT_MOTOR_PIN 21
-#define BACK_RIGHT_MOTOR_PIN 20
+#define FRONT_LEFT_MOTOR_PIN 20
+#define FRONT_RIGHT_MOTOR_PIN 21
+#define BACK_LEFT_MOTOR_PIN 22
+#define BACK_RIGHT_MOTOR_PIN 23
 
 namespace MotorControlManager {
 

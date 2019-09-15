@@ -15,6 +15,7 @@
 
 class MARGCalibrationHandler : public CalibrationHandler {
 public:
+//TODO: replace mpu with marg
   MPU9250 mpu;
 
   MARGCalibrationHandler();

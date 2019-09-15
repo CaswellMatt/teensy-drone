@@ -15,8 +15,15 @@ class MARG {
     MARG();
     void read();
 
+    Vector getMagnetics() { return magnetics; }
+    Vector getAcceleration() { return acceleration; }
+    Vector getRotationalRates() { return rotationalRates; }
+
+  private:
+
     void readValuesForCalibration();
-    void calculateCalibrations();
+
+    MPU9250 mpu;
 
     Vector accelerationCalbrationMin;
     Vector accelerationCalbrationMax;
@@ -25,8 +32,6 @@ class MARG {
     Vector magneticsCalibrationMax;
 
     Vector gyroscopeError;
-
-    MPU9250 mpu;
 
     Vector magnetics;
     Vector acceleration;
