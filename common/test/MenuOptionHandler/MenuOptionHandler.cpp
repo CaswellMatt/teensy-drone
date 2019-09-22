@@ -1,11 +1,11 @@
-#include "CalibrationHandler.h"
+#include "MenuOptionHandler.h"
 
-void CalibrationHandler::start() {
+void MenuOptionHandler::start() {
   printTitle();
   int exitIndex = 0;
 
   bool shouldContinue = true;
-  optionsMap[exitIndex] = new CalibrationOption(
+  optionsMap[exitIndex] = new MenuOption(
     [&shouldContinue](){ shouldContinue = false; },
     "exit"
   );
@@ -14,7 +14,7 @@ void CalibrationHandler::start() {
 
     Serial.println();
 
-    std::map<int, CalibrationOption*>::iterator itr; 
+    std::map<int, MenuOption*>::iterator itr; 
     for (itr = std::next(optionsMap.begin()); itr != optionsMap.end(); ++itr) { 
       Serial.print(itr->first);Serial.print(". ");
       itr->second->printMessage(); 

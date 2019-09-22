@@ -18,7 +18,7 @@ public:
     digitalWriteFast(pin, LOW);
   }
 
-  void trigger(int pulseTime) {
+  void trigger(float32_t pulseTime) {
     on();
     TeensyDelay::trigger(pulseTime, channelId);
   }

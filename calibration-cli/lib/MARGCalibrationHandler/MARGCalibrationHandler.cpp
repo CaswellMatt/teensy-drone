@@ -33,6 +33,12 @@ void MARGCalibrationHandler::checkMaxAndMinAndSet(float32_t input, float32_t& ma
   if (input < min) min = input;
 };
 
+void MARGCalibrationHandler::checkMaxAndMinAndSetForOneValue(float32_t input, float32_t& maxOrMin) {
+  Serial.println(input);
+  if (input > maxOrMin) maxOrMin = input;
+  if (input < maxOrMin) maxOrMin = input;
+};
+
 
 void MARGCalibrationHandler::printTitle() {
   Serial.println("MARG Calibration Menu");
@@ -41,23 +47,23 @@ void MARGCalibrationHandler::printTitle() {
 
 void MARGCalibrationHandler::setup() {
 
-  auto accelerationCalibrator = [this](){ calibrate(mpu.accel_data, 0); };
+  auto accelerationCalibrator = [this](){ calibrateAcceleration(); };
 
-  optionsMap[ACCELERATION_INDEX] = new CalibrationOption(
+  optionsMap[ACCELERATION_INDEX] = new MenuOption(
     accelerationCalibrator, 
     accelerationOptionText
   );
 
-  auto magneticsCalibrator = [this](){ calibrate(mpu.mag_data, 6 * sizeof(float32_t));  };
+  auto magneticsCalibrator = [this](){ calibrate(mpu.mag_data, MAG_START);  };
   
-  optionsMap[MAGNETICS_INDEX] =  new CalibrationOption(
+  optionsMap[MAGNETICS_INDEX] =  new MenuOption(
     magneticsCalibrator, 
     magneticsOptionText
   );
 
   auto printerAllValues = [this](){ printTestValues();  };
 
-  optionsMap[PRINT_TEST_INDEX] = new CalibrationOption(
+  optionsMap[PRINT_TEST_INDEX] = new MenuOption(
     printerAllValues, 
     printTestOptionText
   );
@@ -65,7 +71,7 @@ void MARGCalibrationHandler::setup() {
 
   auto printSavedCalibration = [this](){ readCalibrationValues();  };
 
-  optionsMap[PRINT_SAVED_CALIBRATION_INDEX] = new CalibrationOption(
+  optionsMap[PRINT_SAVED_CALIBRATION_INDEX] = new MenuOption(
     printSavedCalibration, 
     printWrittenCalibrationValues
   );
@@ -73,7 +79,7 @@ void MARGCalibrationHandler::setup() {
 
   auto writeManualCalibrations = [this](){ writeManualValuesToCalibration();  };
 
-  optionsMap[WRITE_MANUAL_TEST_VALUES_INDEX] = new CalibrationOption(
+  optionsMap[WRITE_MANUAL_TEST_VALUES_INDEX] = new MenuOption(
     writeManualCalibrations, 
     writeManualCalibrationText
   );
@@ -107,6 +113,85 @@ void MARGCalibrationHandler::setup() {
 
 }
 
+void MARGCalibrationHandler::calibrateAcceleration() {
+
+  int eepromAddress = ACCEL_START;
+
+  auto runCalibrationAndIncrementEeprom = [&](int accelIndex, String printString) {
+    delay(1000);
+    Serial.println(printString);
+    delay(3000);
+    calibrateOneValue(mpu.accel_data[accelIndex], eepromAddress);
+
+    eepromAddress+=sizeof(float32_t);
+  };
+
+  Serial.println("calibrate x...");
+
+  runCalibrationAndIncrementEeprom(0, "roll right side down");
+  runCalibrationAndIncrementEeprom(0, "roll right side up");
+
+  Serial.println("calibrate y...");
+
+  runCalibrationAndIncrementEeprom(1, "pitch nose up");
+  runCalibrationAndIncrementEeprom(1, "pitch nose down");
+  
+  Serial.println("calibrate z...");
+
+  runCalibrationAndIncrementEeprom(2, "turn top to face down");
+  runCalibrationAndIncrementEeprom(2, "turn back upright");
+
+}
+
+void MARGCalibrationHandler::calibrateOneValue(float& data, int eepromStartAddress) {
+
+  Serial.println("started calibration");
+
+  float32_t minOrMax = 0;
+ 
+  float32_t acculumator = 0;
+
+  int count = 400;
+
+  for (int j = 0; j < 10; ++j) {
+
+    Serial.println(j);
+
+    for (int i = 0; i < count; ++i) {
+      mpu.read_all();
+
+      acculumator += data;
+
+      delayMicroseconds(500);
+    }
+
+    float32_t average = acculumator / count;
+
+    checkMaxAndMinAndSetForOneValue(average, minOrMax);
+
+    acculumator = 0;
+
+  }
+
+  int eeAddress = eepromStartAddress;
+
+  EEPROM.put(eeAddress, minOrMax);
+
+  Serial.print("value ");Serial.println(minOrMax);
+
+  Serial.println("done");
+
+}
+
+void MARGCalibrationHandler::readCalibrationValues() {
+  float32_t valueToPrint = 0;
+  for (int i = 0; i < 12; ++i) {
+    EEPROM.get(i * sizeof(float32_t), valueToPrint);
+    Serial.println(valueToPrint);
+  }
+}
+
+
 
 void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress) {
 
@@ -124,15 +209,15 @@ void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress)
   float32_t yAcculumator = 0;
   float32_t zAcculumator = 0;
 
-  int count = 50;
+  int count = 400;
 
-  for (int j = 0; j < 1000; ++j) {
+  for (int j = 0; j < 180; ++j) {
 
     Serial.println(j);
 
     for (int i = 0; i < count; ++i) {
       mpu.read_all();
-
+    
       xAcculumator += *(dataArray);
       yAcculumator += *(dataArray + 1);
       zAcculumator += *(dataArray + 2);
@@ -151,6 +236,7 @@ void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress)
     xAcculumator = 0;
     yAcculumator = 0;
     zAcculumator = 0;
+
   }
 
 
@@ -186,14 +272,6 @@ void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress)
 
   Serial.println("done");
 
-}
-
-void MARGCalibrationHandler::readCalibrationValues() {
-  float32_t valueToPrint = 0;
-  for (int i = 0; i < 12; ++i) {
-    EEPROM.get(i * sizeof(float32_t), valueToPrint);
-    Serial.println(valueToPrint);
-  }
 }
 
 

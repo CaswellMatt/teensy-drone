@@ -1,14 +1,13 @@
-#ifndef CALIBRATION_OPTION
-#define CALIBRATION_OPTION
-
+#ifndef MENU_OPTION
+#define MENU_OPTION
+#include <Arduino.h>
 #include <functional>
-const String a = "hellllooo";
-class CalibrationOption {
+class MenuOption {
 public:
-  CalibrationOption(
-    std::function<void()> calibrationCallback, 
+  MenuOption(
+    std::function<void()> optionCallback, 
     const String optionMessage) : 
-      callback(calibrationCallback),
+      callback(optionCallback),
       message(optionMessage)
   {
      

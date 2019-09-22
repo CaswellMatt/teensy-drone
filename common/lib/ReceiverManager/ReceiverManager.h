@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "ReceiverPulseTimer.h"
 #include "MemoryLocations.h"
+#include "Math.h"
 
 
 
@@ -20,8 +21,8 @@
                              float32_t& midMapped, 
                              float32_t& endMapped) {
       float32_t pulse = timer->getPulseLength() < mid ? 
-        map(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
-        map(timer->getPulseLength(), mid, max, midMapped, endMapped); 
+        Math::mapfloat(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
+        Math::mapfloat(timer->getPulseLength(), mid, max, midMapped, endMapped); 
 
       return pulse;
     }
@@ -31,8 +32,8 @@
       float32_t endMapped    = 250;
       float32_t midMapped = (startMapped + endMapped) / 2;
       float32_t pulse = timer->getPulseLength() < mid ? 
-        map(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
-        map(timer->getPulseLength(), mid, max, midMapped, endMapped); 
+        Math::mapfloat(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
+        Math::mapfloat(timer->getPulseLength(), mid, max, midMapped, endMapped); 
 
       return pulse;
     }
@@ -60,7 +61,6 @@ namespace ReceiverManager
   ReceiverAligner* pitchAligned;
   ReceiverAligner* throttleAligned;
   ReceiverAligner* yawAligned;
-  
 
   void rollInputInterrupt() {
     rollInput.onPulseStateChange();
@@ -85,6 +85,13 @@ namespace ReceiverManager
     throttleInput.setupInterruptForThisChannel(throttleInputInterrupt);
     yawInput.setupInterruptForThisChannel(yawInputInterrupt);
 
+  }
+
+  bool isReceiving() {
+    return rollInput.isWorking() && 
+           pitchInput.isWorking() &&
+           throttleInput.isWorking() &&
+           yawInput.isWorking();
   }
 
   void updateMinAndMaxForTimer(float32_t& min, float32_t& max, float32_t& mid, int startAddress) {

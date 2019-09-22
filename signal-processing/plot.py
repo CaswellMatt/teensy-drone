@@ -6,7 +6,7 @@ import collections
 
 from scipy import signal
 
-with open('data.txt', newline = '') as filter:
+with open('data.txt.4.csv', newline = '') as filter:
     data = csv.reader(filter, delimiter=' ')
     time = []
     outputsFiltered = []
@@ -15,23 +15,23 @@ with open('data.txt', newline = '') as filter:
     filterOutputs = collections.deque([]) 
     filterInputs = collections.deque([]) 
     
-    inputCoefficientsB = [ 0.086364,   0.086364]
-    outputCoefficientsA = [ 1.00000,  -0.82727]
+    inputCoefficientsB = [ 0.0018421   ,0.0047320   ,0.0047320  , 0.0018421]
+    outputCoefficientsA = [    1.00000  ,-2.62253   ,2.36927  ,-0.73358]
 
     print(outputCoefficientsA[0])
     filterOrder = len(inputCoefficientsB)
 
     for x in data:
-
+        index = 5
         try:
-            a = x[7]
+            a = x[index]
         except IndexError:
             pass
             continue
 
-        filterInputs.append(float(x[7]))
+        filterInputs.append(float(x[index]))
         
-        inputs.append(float(x[7]))
+        inputs.append(float(x[index]))
 
         if (len(filterInputs) == filterOrder):
             filterInputs.popleft()
@@ -54,18 +54,16 @@ with open('data.txt', newline = '') as filter:
             outputsFiltered.append(currentOutput)
             
         else:
-            filterOutputs.append(float(x[7]))
-
-
+            filterOutputs.append(float(x[index]))
         
         
     print(filterOutputs)
 
 
 
-    Fs = 2000  # sampling rate
+    Fs = 1000  # sampling rate
     Ts = 1.0/Fs # sampling interval
-    t = np.arange(0,2,Ts) # time vector
+    t = np.arange(0,5,Ts) # time vector
 
 
     inputsY = inputs[:len(t)]
@@ -93,9 +91,9 @@ with open('data.txt', newline = '') as filter:
     ax[0].plot(t,inputsY)
     ax[0].set_xlabel('Time')
     ax[0].set_ylabel('Amplitude')
-    ax[0].axis((0,1,-0.05,0.05))
+    ax[0].axis((0,5,-10,15))
 
-    ax[1].plot(frq[1:],abs(inputFourier[1:]),'r') # plotting the spectrum
+    ax[1].plot(frq[2:],abs(inputFourier[2:]),'r') # plotting the spectrum
     ax[1].set_xlabel('Freq (Hz)')
     ax[1].set_ylabel('|Y(freq)|')
 
@@ -103,9 +101,9 @@ with open('data.txt', newline = '') as filter:
     ax[2].plot(t,filteredY)
     ax[2].set_xlabel('Time')
     ax[2].set_ylabel('Amplitude')
-    ax[2].axis((0,1,-0.05,0.05))
+    ax[2].axis((0,5,-10,15))
     
-    ax[3].plot(frq[1:],abs(outputFourier[1:]),'r') # plotting the spectrum
+    ax[3].plot(frq[2:],abs(outputFourier[2:]),'r') # plotting the spectrum
     ax[3].set_xlabel('Freq (Hz)')
     ax[3].set_ylabel('|Y(freq)|')
 

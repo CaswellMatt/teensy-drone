@@ -8,14 +8,6 @@
 
 #define SS_PIN   10 
 
-#define WAITFORINPUT(){         \
-	while(!Serial.available()){}; \
-	while(Serial.available()){    \
-		Serial.read();              \
-	};                            \
-}                               \
-
-
 
 MARG::MARG() : mpu(SPI_CLOCK, SS_PIN) {
 
@@ -81,10 +73,16 @@ static const double TO_RADIANS = 0.01745329251;
   rotationalRates.v1 = (mpu.gyro_data[1] - gyroscopeError.v1) * TO_RADIANS;
   rotationalRates.v2 = (mpu.gyro_data[2] - gyroscopeError.v2) * TO_RADIANS;
 
-  acceleration.v0 = map(mpu.accel_data[0], accelerationCalbrationMin.v0, accelerationCalbrationMax.v0, -g, g);
-  acceleration.v1 = map(mpu.accel_data[1], accelerationCalbrationMin.v1, accelerationCalbrationMax.v1, -g, g);
-  acceleration.v2 = map(mpu.accel_data[2], accelerationCalbrationMin.v2, accelerationCalbrationMax.v2, -g, g);
+  filt0.doing(map(mpu.accel_data[0], accelerationCalbrationMin.v0, accelerationCalbrationMax.v0, -g, g));
+  acceleration.v0 = filt0.getCurrent();
   
+  filt1.doing(map(mpu.accel_data[1], accelerationCalbrationMin.v1, accelerationCalbrationMax.v1, g, -g));
+  acceleration.v1 = filt1.getCurrent();
+
+  filt2.doing(map(mpu.accel_data[2], accelerationCalbrationMin.v2, accelerationCalbrationMax.v2, -g, g));
+  acceleration.v2 = filt2.getCurrent();
+  
+  //TODO: can use data read interrupts to avoid reading mag data too often when not changed?
   magnetics.v0 = map(mpu.mag_data[0], magneticsCalibrationMin.v0, magneticsCalibrationMax.v0, -1, 1);
   magnetics.v1 = map(mpu.mag_data[1], magneticsCalibrationMin.v1, magneticsCalibrationMax.v1, -1, 1);
   magnetics.v2 = map(mpu.mag_data[2], magneticsCalibrationMin.v2, magneticsCalibrationMax.v2, -1, 1);

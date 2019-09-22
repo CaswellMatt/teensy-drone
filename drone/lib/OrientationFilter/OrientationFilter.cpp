@@ -6,15 +6,15 @@ OrientationFilter::OrientationFilter() :
 }
 
 
-void OrientationFilter::update(float deltaT) {
+void OrientationFilter::update(float32_t deltaT) {
   marg.read();
 
-  Quaternion rotatinalRates = marg.getRotationalRates().toQuaternion();
+  Quaternion rotationalRates = marg.getRotationalRates().toQuaternion();
 
   Quaternion changeInOrientationForGyro
-             = rotatinalRates.multiply(orientation).scale(-0.5 * deltaT);
+             = rotationalRates.multiply(orientation).scale(-0.5 * deltaT);
 
-  orientationGyro = orientation.add(changeInOrientationForGyro).asUnit();
+  Quaternion orientationGyro = orientation.add(changeInOrientationForGyro).asUnit();
 
   // rotate acceleration back relative to ground with conjugate
   Vector gravity = orientationGyro.conjugate().rotate(marg.getAcceleration());
@@ -28,14 +28,24 @@ void OrientationFilter::update(float deltaT) {
     if (error < lowerBound) {
       return error;
     } else if (error >= lowerBound && error < upperBound) {
-      return 2 - error * 10;
+
+      float32_t dy = 1;
+      float32_t dx = upperBound - lowerBound;
+      float32_t m = -dy/dx;
+      float32_t c = -m * upperBound;
+      float32_t y = m * error +  c;
+
+      return y;
+
     } else {
       return 0;
     }
   };
 
   static float32_t previousGain = 0;
-  float32_t gain = gainFactor(error, 0.1, 0.2);
+  float32_t gain = gainFactor(error, 0.1, 0.3);
+
+  // Serial.println(error);
 
   //check for error when in high acceleration movement
   //so you dont trust incorrect values if the previous value
@@ -44,6 +54,8 @@ void OrientationFilter::update(float deltaT) {
    if (previousGain < 0.3) gain = 0;
   }
   previousGain = gain;
+
+  
   float32_t alpha = 0.05;
   float32_t alphaAdaptive = gain * alpha;
 
@@ -82,7 +94,7 @@ void OrientationFilter::update(float deltaT) {
 
   // static long printTimer = micros();
 
-  // if (micros() - printTimer > 20000) {
+  // if (micros() - printTimer > 100000) {
   //   printTimer = micros();
 
   // Serial.print(gain);;Serial.print(" ");
@@ -95,29 +107,75 @@ void OrientationFilter::update(float deltaT) {
   //   Serial.print(complimentaryOrientationForChangeInAcceleration.q2, 5);Serial.print(" ");
   //   Serial.print(complimentaryOrientationForChangeInAcceleration.q3, 5);Serial.print(" ");
 
-    // Serial.print(marg.getAcceleration().v0, 5);Serial.print(" ");
-    // Serial.print(marg.getAcceleration().v1, 5);Serial.print(" ");
-    // Serial.print(marg.getAcceleration().v2, 5);Serial.print(" ");
+  //   Serial.print(marg.getAcceleration().v0, 5);Serial.print(" ");
+  //   Serial.print(marg.getAcceleration().v1, 5);Serial.print(" ");
+  //   Serial.print(marg.getAcceleration().v2, 5);Serial.print(" ");
 
   //   Serial.print(marg.getMagnetics().v0, 5);Serial.print(" ");
   //   Serial.print(marg.getMagnetics().v1, 5);Serial.print(" ");
   //   Serial.print(marg.getMagnetics().v2, 5);Serial.print(" ");
-      
 
   //   Serial.print(marg.getRotationalRates().v0, 5);Serial.print(" ");
   //   Serial.print(marg.getRotationalRates().v1, 5);Serial.print(" ");
   //   Serial.print(marg.getRotationalRates().v2, 5);Serial.print(" ");
 
-  //   Serial.print(orientation.q0, 5);Serial.print(" ");
-  //   Serial.print(orientation.q1, 5);Serial.print(" ");
-  //   Serial.print(orientation.q2, 5);Serial.print(" ");
-  //   Serial.print(orientation.q3, 5);Serial.print(" ");
+  // Serial.print(orientation.q0, 5);Serial.print(" ");
+  // Serial.print(orientation.q1, 5);Serial.print(" ");
+  // Serial.print(orientation.q2, 5);Serial.print(" ");
+  // Serial.print(orientation.q3, 5);Serial.print(" ");
 
-  //   Serial.println();
+    // Serial.print(marg.getRotationalRates().v0, 5);Serial.print(" ");
+    // Serial.print(marg.getRotationalRates().v1, 5);Serial.print(" ");
+    // Serial.print(marg.getRotationalRates().v2, 5);Serial.print(" ");
+
+    // Serial.print(marg.getAcceleration().v0, 5);Serial.print(" ");
+    // Serial.print(marg.getAcceleration().v1, 5);Serial.print(" ");
+    // Serial.print(marg.getAcceleration().v2, 5);Serial.print(" ");
+
+    // Serial.print(marg.getMagnetics().v0, 5);Serial.print(" ");
+    // Serial.print(marg.getMagnetics().v1, 5);Serial.print(" ");
+    // Serial.print(marg.getMagnetics().v2, 5);Serial.print(" ");
+
+    // Serial.print(getRoll());Serial.print(" ");
+    // Serial.print(getPitch());Serial.print(" ");
+
+    // Serial.println();
   // }
 
   magneticsPrevious = marg.getMagnetics();
 }
+
+
+float32_t OrientationFilter::getRoll() {
+  Vector yRelativeToDrone = orientation.rotate(Vector(0, 1, 0));
+  
+  float32_t xSquaredPlusYSquared = yRelativeToDrone.v0 * yRelativeToDrone.v0 + yRelativeToDrone.v1 * yRelativeToDrone.v1;
+  
+  float32_t xAndY;
+  arm_sqrt_f32(xSquaredPlusYSquared, &xAndY);
+  
+  float32_t roll = atan2(yRelativeToDrone.v2, xAndY);
+  return roll;
+}
+
+
+float32_t OrientationFilter::getPitch() {
+  Vector xRelativeToDrone = orientation.rotate(Vector(1, 0, 0));
+  
+  float32_t xSquaredPlusYSquared = xRelativeToDrone.v0 * xRelativeToDrone.v0 + xRelativeToDrone.v1 * xRelativeToDrone.v1;
+  
+  float32_t xAndY;
+  arm_sqrt_f32(xSquaredPlusYSquared, &xAndY);
+
+  float32_t pitch = atan2(xRelativeToDrone.v2, xAndY);
+  return pitch;
+}
+
+
+float32_t OrientationFilter::getYaw() {
+
+}
+
 
 Quaternion OrientationFilter::calculateAccelerationQuaternion(Vector acceleration) {
   if (acceleration.v2 >= 0) {

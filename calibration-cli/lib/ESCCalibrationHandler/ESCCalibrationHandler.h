@@ -3,9 +3,9 @@
 
 #include <arm_math.h>
 #include <map>
-#include "CalibrationHandler.h"
+#include "MenuOptionHandler.h"
 
-class ESCCalibrationHandler : public CalibrationHandler {
+class ESCCalibrationHandler : public MenuOptionHandler {
 public:
 
 

@@ -30,28 +30,28 @@ void ReceiverCalibrationHandler::setup() {
 
   auto rollCalibrator = [this]() { calibrateReceiver(&ReceiverManager::rollInput, ROLL_START); };
 
-  optionsMap[ROLL_INDEX] = new CalibrationOption(
+  optionsMap[ROLL_INDEX] = new MenuOption(
     rollCalibrator, 
     rollOptionText
   );
 
   auto pitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
 
-  optionsMap[PITCH_INDEX] = new CalibrationOption(
+  optionsMap[PITCH_INDEX] = new MenuOption(
     pitchCalibrator, 
     pitchOptionText
   );
 
   auto yawCalibrator = [this]() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
 
-  optionsMap[YAW_INDEX] = new CalibrationOption(
+  optionsMap[YAW_INDEX] = new MenuOption(
     yawCalibrator, 
     yawOptionText
   );
 
   auto throttleCalibrator = [this]() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
 
-  optionsMap[THROTTLE_INDEX] = new CalibrationOption(
+  optionsMap[THROTTLE_INDEX] = new MenuOption(
     throttleCalibrator, 
     throttleOptionText
   );
@@ -63,7 +63,7 @@ void ReceiverCalibrationHandler::setup() {
     }
   };
 
-  optionsMap[PRINT_INDEX] = new CalibrationOption(
+  optionsMap[PRINT_INDEX] = new MenuOption(
     printAll, 
     printOptionText
   );
@@ -102,7 +102,7 @@ void ReceiverCalibrationHandler::setup() {
     
   };
 
-  optionsMap[PRINT_SAVED_INDEX] = new CalibrationOption(
+  optionsMap[PRINT_SAVED_INDEX] = new MenuOption(
     printSaved, 
     printSavedValuesText
   );

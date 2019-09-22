@@ -10,12 +10,15 @@ class OrientationFilter {
   public:
     OrientationFilter();
 
-    void update(float deltat);
+    void update(float32_t deltaT);
+
+    float32_t getRoll();
+    float32_t getPitch();
+    float32_t getYaw();
 
   private:
     MARG marg;
 
-    Quaternion orientationGyro;
     Quaternion orientation;
 
     Vector magneticsPrevious;

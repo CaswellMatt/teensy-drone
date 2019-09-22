@@ -7,6 +7,9 @@
 
 #include "MotorControlManager.h"
 
+#include "Constants.h"
+
+
 #define CALIBRATE_ALL_ESC_INDEX             1
 
 const String calibrateAllESCsOptionTest = "Calibrate ESC's";
@@ -25,11 +28,8 @@ void ESCCalibrationHandler::printTitle() {
 void ESCCalibrationHandler::setup() {
 
   auto ESCCalibrator = [this](){ calibrate(); };
-
-  optionsMap[CALIBRATE_ALL_ESC_INDEX] = new CalibrationOption(
-    ESCCalibrator, 
-    calibrateAllESCsOptionTest
-  );
+  
+  addOption(CALIBRATE_ALL_ESC_INDEX, ESCCalibrator, calibrateAllESCsOptionTest);
 
   MotorControlManager::setup();
 
@@ -42,27 +42,31 @@ void ESCCalibrationHandler::calibrate() {
   float direction = 1;
   float pulseTime = 250;
 
-  for (int i = 0; i < 15000; i++) {
-    while (micros() - timer < 250);
+  for (int i = 0; i < 5000; i++) {
+    while (micros() - timer < LOOPTIME_US);
+    timer = micros();
+
     MotorControlManager::frontLeft.trigger(pulseTime);
     MotorControlManager::frontRight.trigger(pulseTime);
     MotorControlManager::backLeft.trigger(pulseTime);
     MotorControlManager::backRight.trigger(pulseTime);
     
-    timer = micros();
+    
 
     Serial.println(pulseTime);
   }
 
   pulseTime = 125;
 
-  for (int i = 0; i < 15000; i++) {
-    while (micros() - timer < 500);
+  for (int i = 0; i < 5000; i++) {
+    while (micros() - timer < LOOPTIME_US);
+    timer = micros();
+
     MotorControlManager::frontLeft.trigger(pulseTime);
     MotorControlManager::frontRight.trigger(pulseTime);
     MotorControlManager::backLeft.trigger(pulseTime);
     MotorControlManager::backRight.trigger(pulseTime);
-    timer = micros();
+
     Serial.println(pulseTime);
   }
 

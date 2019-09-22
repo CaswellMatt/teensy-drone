@@ -5,9 +5,16 @@
 
 class ReceiverPulseTimer {
 public:
-  ReceiverPulseTimer(uint8_t inputPin) : pin(inputPin) {}
+  ReceiverPulseTimer(uint8_t inputPin) : 
+    pin(inputPin), 
+    pulseLength(0), 
+    hasReceivedInterrupt(false) {}
 
   void onPulseStateChange() {
+    if (!hasReceivedInterrupt) {
+      hasReceivedInterrupt = true;
+    } 
+
     if (digitalReadFast(pin)) {
       timer = micros();
     } else {
@@ -23,13 +30,19 @@ public:
     return pulseLength;
   }
 
+  int isWorking() {
+    return hasReceivedInterrupt;
+  }
+
   void setupInterruptForThisChannel(void (*interruptFunction)(void)) {
     attachInterrupt(pin, interruptFunction, CHANGE);
   }
 
+private:
   long timer;
   int pulseLength;
   uint8_t pin;
+  bool hasReceivedInterrupt;
 
 };
 
