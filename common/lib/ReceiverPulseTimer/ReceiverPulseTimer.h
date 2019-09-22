@@ -40,8 +40,8 @@ public:
 
 private:
   long timer;
-  int pulseLength;
   uint8_t pin;
+  int pulseLength;
   bool hasReceivedInterrupt;
 
 };

@@ -13,6 +13,7 @@ public:
   virtual void printTitle() override;
 
   void calibrateReceiver(ReceiverPulseTimer* timer, int eepromStartAddress);
+  void printReceiver(String receiverName, int startAddress);
 
 };
 

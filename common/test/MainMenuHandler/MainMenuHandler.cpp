@@ -1,12 +1,9 @@
 #include "MainMenuHandler.h"
 
 void MainMenuHandler::setup() {
-  while(!Serial);
-
   Serial.begin(1);
   Serial.flush();
-  Serial.clear();
-
+  
   std::map<int,MenuOptionHandler*>::iterator itr; 
   for (itr = handlerMap.begin(); itr != handlerMap.end(); ++itr) { 
     Serial.println(itr->first);
@@ -48,6 +45,6 @@ void MainMenuHandler::start() {
   while(1) {};
 }
 
-void MainMenuHandler::addOption(int menuIndex, MenuOptionHandler* menuOptionHandler) {
+void MainMenuHandler::addOptionHandler(int menuIndex, MenuOptionHandler* menuOptionHandler) {
   handlerMap[menuIndex] = menuOptionHandler;
 }

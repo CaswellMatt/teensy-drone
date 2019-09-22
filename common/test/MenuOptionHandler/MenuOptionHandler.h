@@ -18,12 +18,7 @@ public:
   virtual void printTitle() = 0;
   virtual void setup() = 0;
 
-  void addOption(int optionIndex, std::function<void()> optionFunction, const String optionMenuMessageText) {
-    optionsMap[optionIndex] = new MenuOption(
-      optionFunction, 
-      optionMenuMessageText
-    );
-  }
+  void addOption(int optionIndex, std::function<void()> optionFunction, const String optionMenuMessageText);
 
   void start();
 protected:

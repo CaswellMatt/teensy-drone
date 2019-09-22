@@ -48,43 +48,19 @@ void MARGCalibrationHandler::printTitle() {
 void MARGCalibrationHandler::setup() {
 
   auto accelerationCalibrator = [this](){ calibrateAcceleration(); };
-
-  optionsMap[ACCELERATION_INDEX] = new MenuOption(
-    accelerationCalibrator, 
-    accelerationOptionText
-  );
+  addOption(ACCELERATION_INDEX, accelerationCalibrator, accelerationOptionText);
 
   auto magneticsCalibrator = [this](){ calibrate(mpu.mag_data, MAG_START);  };
+  addOption(MAGNETICS_INDEX, magneticsCalibrator, magneticsOptionText);
   
-  optionsMap[MAGNETICS_INDEX] =  new MenuOption(
-    magneticsCalibrator, 
-    magneticsOptionText
-  );
-
   auto printerAllValues = [this](){ printTestValues();  };
-
-  optionsMap[PRINT_TEST_INDEX] = new MenuOption(
-    printerAllValues, 
-    printTestOptionText
-  );
-
+  addOption(PRINT_TEST_INDEX, printerAllValues, printTestOptionText);
 
   auto printSavedCalibration = [this](){ readCalibrationValues();  };
-
-  optionsMap[PRINT_SAVED_CALIBRATION_INDEX] = new MenuOption(
-    printSavedCalibration, 
-    printWrittenCalibrationValues
-  );
-
-
+  addOption(PRINT_SAVED_CALIBRATION_INDEX, printSavedCalibration, printWrittenCalibrationValues);
+    
   auto writeManualCalibrations = [this](){ writeManualValuesToCalibration();  };
-
-  optionsMap[WRITE_MANUAL_TEST_VALUES_INDEX] = new MenuOption(
-    writeManualCalibrations, 
-    writeManualCalibrationText
-  );
-
-
+  addOption(WRITE_MANUAL_TEST_VALUES_INDEX, writeManualCalibrations, writeManualCalibrationText);
 
   SPI.begin();
 

@@ -29,32 +29,14 @@ void ReceiverCalibrationHandler::printTitle() {
 void ReceiverCalibrationHandler::setup() {
 
   auto rollCalibrator = [this]() { calibrateReceiver(&ReceiverManager::rollInput, ROLL_START); };
-
-  optionsMap[ROLL_INDEX] = new MenuOption(
-    rollCalibrator, 
-    rollOptionText
-  );
-
   auto pitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
-
-  optionsMap[PITCH_INDEX] = new MenuOption(
-    pitchCalibrator, 
-    pitchOptionText
-  );
-
   auto yawCalibrator = [this]() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
-
-  optionsMap[YAW_INDEX] = new MenuOption(
-    yawCalibrator, 
-    yawOptionText
-  );
-
   auto throttleCalibrator = [this]() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
 
-  optionsMap[THROTTLE_INDEX] = new MenuOption(
-    throttleCalibrator, 
-    throttleOptionText
-  );
+  addOption(ROLL_INDEX, rollCalibrator, rollOptionText);
+  addOption(PITCH_INDEX, pitchCalibrator, pitchOptionText);
+  addOption(YAW_INDEX, yawCalibrator, yawOptionText);
+  addOption(THROTTLE_INDEX, throttleCalibrator, throttleOptionText);
 
   auto printAll = [this]() { 
     for (int i = 0; i < 1000; ++i) {
@@ -63,38 +45,10 @@ void ReceiverCalibrationHandler::setup() {
     }
   };
 
-  optionsMap[PRINT_INDEX] = new MenuOption(
-    printAll, 
-    printOptionText
-  );
+  addOption(PRINT_INDEX, printAll, printOptionText);
 
   auto printSaved = [this]() { 
     
-   auto printReceiver = [](String receiverName, int startAddress) {
-
-      float32_t min;
-      float32_t max;
-      float32_t mid;
-
-      int eeAddress = startAddress;
-      Serial.println(eeAddress);
-      EEPROM.get(eeAddress, min);
-
-      eeAddress += sizeof(float32_t);
-      Serial.println(eeAddress);
-      EEPROM.get(eeAddress, max);
-
-      eeAddress += sizeof(float32_t);
-      Serial.println(eeAddress);
-      EEPROM.get(eeAddress, mid);
-
-      Serial.print(receiverName); Serial.print(" ");
-      Serial.print("Max "); Serial.print(max); Serial.print(" ");
-      Serial.print("Min "); Serial.print(min); Serial.print(" ");
-      Serial.print("Mid "); Serial.print(mid); Serial.println();
-    };
-
-
     printReceiver("roll", ROLL_START);
     printReceiver("pitch", PITCH_START);
     printReceiver("throttle", THROTTLE_START);
@@ -102,14 +56,36 @@ void ReceiverCalibrationHandler::setup() {
     
   };
 
-  optionsMap[PRINT_SAVED_INDEX] = new MenuOption(
-    printSaved, 
-    printSavedValuesText
-  );
+  addOption({PRINT_SAVED_INDEX}, printSaved, printSavedValuesText);
 
   ReceiverManager::setupReceivers();
 
 }
+
+void ReceiverCalibrationHandler::printReceiver(String receiverName, int startAddress) {
+
+  float32_t min;
+  float32_t max;
+  float32_t mid;
+
+  int eeAddress = startAddress;
+  Serial.println(eeAddress);
+  EEPROM.get(eeAddress, min);
+
+  eeAddress += sizeof(float32_t);
+  Serial.println(eeAddress);
+  EEPROM.get(eeAddress, max);
+
+  eeAddress += sizeof(float32_t);
+  Serial.println(eeAddress);
+  EEPROM.get(eeAddress, mid);
+
+  Serial.print(receiverName); Serial.print(" ");
+  Serial.print("Max "); Serial.print(max); Serial.print(" ");
+  Serial.print("Min "); Serial.print(min); Serial.print(" ");
+  Serial.print("Mid "); Serial.print(mid); Serial.println();
+};
+
 
 const int RECEIVER_PULSE_COUNT_TO_AVERAGE = 100;
 

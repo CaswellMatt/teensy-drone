@@ -41,7 +41,7 @@ public:
           currentOutput += inputCoefficientsB[j] * filterInputs[-j];
         }
 
-        filterOutputs[currentIndexInCircular] == currentOutput;
+        filterOutputs[currentIndexInCircular] = currentOutput;
 
     } else {
       filterOutputs[currentIndexInCircular] = input;

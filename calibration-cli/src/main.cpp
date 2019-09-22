@@ -19,9 +19,11 @@ MainMenuHandler mainMenu;
 
 void setup() {
 
-  mainMenu.addOption(MARG_HANDLER_INDEX, &margCalibrationHandler);
-  mainMenu.addOption(RECEIVER_HANDLER_INDEX, &receiverHandler);
-  mainMenu.addOption(ESC_HANDLER_INDEX, &escHandler);
+  mainMenu.addOptionHandler(MARG_HANDLER_INDEX, &margCalibrationHandler);
+  mainMenu.addOptionHandler(RECEIVER_HANDLER_INDEX, &receiverHandler);
+  mainMenu.addOptionHandler(ESC_HANDLER_INDEX, &escHandler);
+
+  mainMenu.setup();
 
 }
 

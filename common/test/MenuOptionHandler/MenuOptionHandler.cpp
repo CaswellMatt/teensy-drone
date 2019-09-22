@@ -35,3 +35,10 @@ void MenuOptionHandler::start() {
     }
   };
 }
+
+  void MenuOptionHandler::addOption(int optionIndex, std::function<void()> optionFunction, const String optionMenuMessageText) {
+    optionsMap[optionIndex] = new MenuOption(
+      optionFunction, 
+      optionMenuMessageText
+    );
+  }

@@ -39,7 +39,6 @@ void ESCCalibrationHandler::setup() {
 void ESCCalibrationHandler::calibrate() {
   int timer = micros();
 
-  float direction = 1;
   float pulseTime = 250;
 
   for (int i = 0; i < 5000; i++) {
@@ -51,8 +50,6 @@ void ESCCalibrationHandler::calibrate() {
     MotorControlManager::backLeft.trigger(pulseTime);
     MotorControlManager::backRight.trigger(pulseTime);
     
-    
-
     Serial.println(pulseTime);
   }
 

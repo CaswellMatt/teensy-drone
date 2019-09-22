@@ -173,7 +173,7 @@ float32_t OrientationFilter::getPitch() {
 
 
 float32_t OrientationFilter::getYaw() {
-
+  return 0;
 }
 
 
