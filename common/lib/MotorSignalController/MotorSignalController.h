@@ -12,19 +12,21 @@ public:
     }
 
   int pin;
-  int channelId;
+  int channelIdHigh;
+  int channelIdLow;
+  int delay;
 
-  void on() {
+  void high() {
     digitalWriteFast(pin, HIGH);
   }
 
-  void off() {
+  void low() {
     digitalWriteFast(pin, LOW);
   }
 
   void trigger(float32_t pulseTime) {
-    on();
-    TeensyDelay::trigger(pulseTime, channelId);
+    TeensyDelay::trigger(delay, channelIdHigh);
+    TeensyDelay::trigger(pulseTime + delay, channelIdLow);
   }
 
 };

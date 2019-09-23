@@ -13,31 +13,57 @@ const String backLeftTestString = "Test back left motor noise";
 
 void MotorNoiseTest::setup() {
 
-  optionIndexToMotorSignalController[FRONT_LEFT_TEST_INDEX]  = &MotorControlManager::frontLeft;
-  optionIndexToMotorSignalController[FRONT_RIGHT_TEST_INDEX] = &MotorControlManager::frontRight;
-  optionIndexToMotorSignalController[BACK_LEFT_TEST_INDEX]   = &MotorControlManager::backLeft;
-  optionIndexToMotorSignalController[BACK_RIGHT_TEST_INDEX]  = &MotorControlManager::backRight;
+  MotorControlManager::setup();
 
-  auto backLeftMotorFunctionCall = [this]() { runBackLeftMotorTest(); };
+  auto backLeftMotorFunctionCall = [this]() { runMotorTest(MotorControlManager::backLeft); };
   addOption(BACK_LEFT_TEST_INDEX, backLeftMotorFunctionCall, backLeftTestString);
 
-  timer = micros();
+  auto backRightMotorFunctionCall = [this]() { runMotorTest(MotorControlManager::backRight); };
+  addOption(BACK_RIGHT_TEST_INDEX, backRightMotorFunctionCall, backLeftTestString);
 
+  auto frontLeftMotorFunctionCall = [this]() { runMotorTest(MotorControlManager::frontLeft); };
+  addOption(FRONT_LEFT_TEST_INDEX, frontLeftMotorFunctionCall, backLeftTestString);
+
+  auto frontRightMotorFunctionCall = [this]() { runMotorTest(MotorControlManager::frontRight); };
+  addOption(FRONT_RIGHT_TEST_INDEX, frontRightMotorFunctionCall, backLeftTestString);
+
+  timer = micros();
 } 
 
 void MotorNoiseTest::printTitle() {
   Serial.println("Motor Noise Test");
 }
 
-void MotorNoiseTest::runBackLeftMotorTest() {
+void MotorNoiseTest::runMotorTest(MotorSignalController& signalController) {
 
-  while(micros() - timer < LOOPTIME_US);
-  timer = micros();
-  marg.read();
 
-  MotorControlManager::frontLeft.trigger(frontLeftPulse);
-  MotorControlManager::frontRight.trigger(frontRightPulse);
-  MotorControlManager::backLeft.trigger(backLeftPulse);
-  MotorControlManager::backRight.trigger(backRightPulse);
+  float32_t direction = 1;
+  float32_t increment = 0.001;
+  int iterationCount = 0;
+  bool exit = false;
+  while(!exit) {
+    while(micros() - timer < LOOPTIME_US);
+    timer = micros();
+
+    signalController.trigger(backLeftPulse);
+    
+    Serial.println(backLeftPulse);Serial.print(" ");
+
+
+    if (iterationCount > 1000) {
+      increment*= 1.001;
+      Serial.print(direction*increment);Serial.print(" ");
+      backLeftPulse+=direction*increment;
+      if (backLeftPulse > 240) direction = -1;
+      marg.read();
+    }
+
+    if (backLeftPulse < 125 || backLeftPulse > 250) exit = true;
+
+    iterationCount++;
+
+  }
+
+  backLeftPulse=throttleMapStart;
 }
 

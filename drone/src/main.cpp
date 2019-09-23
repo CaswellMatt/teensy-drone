@@ -84,11 +84,11 @@ float32_t backRightPulse  = throttleMapStart;
 void loop() {
 
   orientationFilter.update(LOOPTIME_S);
-  Serial.println(ReceiverManager::rollAligned->getPulseLength(controlPulseStart, controlPulseMiddle, controlPulseEnd));
+
   if (motorsAreActive()) {
     
     float32_t rollPulse =
-      ReceiverManager::rollAligned->getPulseLength(throttleMapStart, throttleMapStart, throttleMapEnd);
+      ReceiverManager::rollAligned->getPulseLength(controlPulseStart, controlPulseMiddle, controlPulseEnd);
     float32_t pitchPulse =
       ReceiverManager::pitchAligned->getPulseLength(controlPulseStart, controlPulseMiddle, controlPulseEnd);
     float32_t yawPulse =
@@ -97,15 +97,10 @@ void loop() {
     float32_t throttlePulse = 
       ReceiverManager::throttleAligned->getPulseLength(throttleMapStart, throttleMapMiddle, throttleMapEnd);
 
-    // frontLeftPulse  = throttlePulse + rollPulse - pitchPulse + yawPulse;
-    // frontRightPulse = throttlePulse - rollPulse - pitchPulse - yawPulse;
-    // backLeftPulse   = throttlePulse + rollPulse + pitchPulse + yawPulse;
-    // backRightPulse  = throttlePulse - rollPulse + pitchPulse - yawPulse;
-
-    // frontLeftPulse  = throttlePulse + rollPulse - pitchPulse + yawPulse;
-    // frontRightPulse = throttlePulse - rollPulse - pitchPulse - yawPulse;
-    backLeftPulse   = rollPulse;
-    backRightPulse  = throttlePulse;
+    frontLeftPulse  = throttlePulse + rollPulse - pitchPulse + yawPulse;
+    frontRightPulse = throttlePulse - rollPulse - pitchPulse - yawPulse;
+    backLeftPulse   = throttlePulse + rollPulse + pitchPulse + yawPulse;
+    backRightPulse  = throttlePulse - rollPulse + pitchPulse - yawPulse;
 
     auto checkMinMaxOfPulse = [](float32_t& pulse) {
       float32_t min = throttleMapStart;
@@ -134,12 +129,10 @@ void loop() {
   }
 
   while(micros() - timer < LOOPTIME_US);
-  // Serial.println(micros() - timer);
-
   timer = micros();
 
-  // MotorControlManager::frontLeft.trigger(frontLeftPulse);
-  // MotorControlManager::frontRight.trigger(frontRightPulse);
+  MotorControlManager::frontLeft.trigger(frontLeftPulse);
+  MotorControlManager::frontRight.trigger(frontRightPulse);
   MotorControlManager::backLeft.trigger(backLeftPulse);
   MotorControlManager::backRight.trigger(backRightPulse);
 

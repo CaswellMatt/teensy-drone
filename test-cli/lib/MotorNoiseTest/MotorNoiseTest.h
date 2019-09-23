@@ -7,16 +7,14 @@
 #include "MARG.h"
 
 #include "MotorControlManager.h"
+#include "MotorSignalController.h"
 
-#include <map>
+
 
 class MotorNoiseTest : public MenuOptionHandler {
 private:
     long timer;
     MARG marg;
-
-    #include "MotorControlManager.h"
-    std::map<int, MotorSignalController*> optionIndexToMotorSignalController;
 
 public:
 
@@ -30,7 +28,7 @@ public:
   float32_t backLeftPulse   = throttleMapStart;
   float32_t backRightPulse  = throttleMapStart;
 
-  void runBackLeftMotorTest();
+  void runMotorTest(MotorSignalController& signalController);
 
 };
 

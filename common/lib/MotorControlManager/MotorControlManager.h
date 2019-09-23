@@ -9,18 +9,26 @@
 #define BACK_RIGHT_MOTOR_PIN 23
 
 namespace MotorControlManager {
+  
+  extern MotorSignalController frontLeft;
+  extern MotorSignalController frontRight;
+  extern MotorSignalController backLeft;
+  extern MotorSignalController backRight;
 
-  static MotorSignalController frontLeft(FRONT_LEFT_MOTOR_PIN);
-  static MotorSignalController frontRight(FRONT_RIGHT_MOTOR_PIN);
-  static MotorSignalController backLeft(BACK_LEFT_MOTOR_PIN);
-  static MotorSignalController backRight(BACK_RIGHT_MOTOR_PIN);
+  extern void turnFrontLeftLow();
+  extern void turnFrontRightLow();
+  extern void turnBackLeftLow();
+  extern void turnBackRightLow();
 
-  void turnFrontLeftOff();
-  void turnFrontRightOff();
-  void turnBackLeftOff();
-  void turnBackRightOff();
-  void registerChannel(MotorSignalController& controller, void (*callback)(), int &nextChannelIdForRegistering);
-  void setup();
+  extern void turnFrontLeftHigh();
+  extern void turnFrontRightHigh();
+  extern void turnBackLeftHigh();
+  extern void turnBackRightHigh();
+
+  extern void registerChannelHigh(MotorSignalController& controller, void (*callback)(), int &nextChannelIdForRegistering);
+  extern void registerChannelLow(MotorSignalController& controller, void (*callback)(), int &nextChannelIdForRegistering);
+  
+  extern void setup();
 };
 
 #endif 
