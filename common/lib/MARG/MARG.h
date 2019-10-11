@@ -5,94 +5,45 @@
 
 #include <SPI.h>
 #include "MPU9250.h"
+#include "AccelerometerFilter.h"
 
 #include "Vector.h"
-#define g 9.807f
-
-
-class filter {
-public:
-  const static int size = 2;
-  float inputCoefficientsB[size] = { 0.086364,   0.086364 };
-  float outputCoefficientsA[size] = { 1.00000,  -0.82727 };
-
-  float filterInputs[size];
-  float filterOutputs[size];
-  int currentIndexInCircular = 0;
-  bool hasFilled = false;
-
-  float currentOutput = 0;
-
-  void doing(float input) {
-
-    int filterOrder = size;
-
-    filterInputs[currentIndexInCircular] = input;
-
-    if (hasFilled) {
-        for(int i = 0; i < filterOrder; i++) {
-          int j = (currentIndexInCircular + i) % size;
-          currentOutput += outputCoefficientsA[j] * filterOutputs[-j];
-          currentOutput = -currentOutput;
-        }
-
-        for(int i = 0; i < filterOrder; i++) {
-          int j = (currentIndexInCircular + i) % size;
-          currentOutput += inputCoefficientsB[j] * filterInputs[-j];
-        }
-
-        filterOutputs[currentIndexInCircular] = currentOutput;
-
-    } else {
-      filterOutputs[currentIndexInCircular] = input;
-      if (currentIndexInCircular == size) {
-        hasFilled = true;
-      }
-      currentOutput = input;
-    }
-
-    currentIndexInCircular++;
-    currentIndexInCircular %= size;
-
-  }
-
-  float getCurrent() {
-    return currentOutput;
-  }
-};
+#define G 9.807f
 
 
 class MARG {
 
   public:
-    MARG();
+    MARG(bool accelerationSoftwareFilterOn = false);
     void read();
 
-    Vector getMagnetics() { return magnetics; }
-    Vector getAcceleration() { return acceleration; }
-    Vector getRotationalRates() { return rotationalRates; }
+    Vector getMagnetics() { return m_magnetics; }
+    Vector getAcceleration() { return m_acceleration; }
+    Vector getRotationalRates() { return m_rotationalRates; }
 
   private:
 
     void readValuesForCalibration();
 
-    MPU9250 mpu;
+    MPU9250 m_mpu;
 
-    filter filt0;
-    filter filt1;
-    filter filt2;
+    AccelerometerFilter m_filterX;
+    AccelerometerFilter m_filterY;
+    AccelerometerFilter m_filterZ;
 
-    Vector accelerationCalbrationMin;
-    Vector accelerationCalbrationMax;
+    Vector m_accelerationCalbrationMin;
+    Vector m_accelerationCalbrationMax;
 
-    Vector magneticsCalibrationMin;
-    Vector magneticsCalibrationMax;
+    Vector m_magneticsCalibrationMin;
+    Vector m_magneticsCalibrationMax;
 
-    Vector gyroscopeError;
+    Vector m_gyroscopeError;
 
-    Vector magnetics;
-    Vector acceleration;
-    Vector rotationalRates;
+    Vector m_magnetics;
+    Vector m_acceleration;
+    Vector m_rotationalRates;
+
+    const bool m_accelerationSoftwareFiltersOn;
 
 };
 

@@ -39,7 +39,7 @@ void ESCCalibrationHandler::setup() {
 void ESCCalibrationHandler::calibrate() {
   int timer = micros();
 
-  float pulseTime = 250;
+  float pulseTime = throttleMapEnd;
 
   for (int i = 0; i < 5000; i++) {
     while (micros() - timer < LOOPTIME_US);
@@ -53,7 +53,7 @@ void ESCCalibrationHandler::calibrate() {
     Serial.println(pulseTime);
   }
 
-  pulseTime = 125;
+  pulseTime = throttleMapStart;
 
   for (int i = 0; i < 5000; i++) {
     while (micros() - timer < LOOPTIME_US);

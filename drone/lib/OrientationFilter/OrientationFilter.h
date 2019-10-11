@@ -8,7 +8,7 @@
 class OrientationFilter {
 
   public:
-    OrientationFilter();
+    OrientationFilter(bool accelerationSoftwareFilterOn = true);
 
     void update(float32_t deltaT);
 
@@ -17,11 +17,10 @@ class OrientationFilter {
     float32_t getYaw();
 
   private:
-    MARG marg;
+    Quaternion m_orientation;
+    MARG m_marg;
 
-    Quaternion orientation;
-
-    Vector magneticsPrevious;
+    Vector m_magneticsPrevious;
     Quaternion calculateAccelerationQuaternion(Vector acceleration);
 
     Quaternion calculateDeltaAccelerationQuaternion(Vector gravityUnit);

@@ -2,12 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 import collections 
-
+import sys
 
 from scipy import signal
 
-with open('data.txt.4.csv', newline = '') as filter:
-    data = csv.reader(filter, delimiter=' ')
+commandLineArg = sys.argv[1]
+
+with open(commandLineArg, newline = '') as motorData:
+    reader = csv.reader(motorData, delimiter=' ')
+    next(reader, None)
     time = []
     outputsFiltered = []
     inputs = []
@@ -15,14 +18,18 @@ with open('data.txt.4.csv', newline = '') as filter:
     filterOutputs = collections.deque([]) 
     filterInputs = collections.deque([]) 
     
-    inputCoefficientsB = [ 0.0018421   ,0.0047320   ,0.0047320  , 0.0018421]
-    outputCoefficientsA = [    1.00000  ,-2.62253   ,2.36927  ,-0.73358]
+
+
+
+
+    inputCoefficientsB = [1,	-4.75371,	10.2799,	-13.76442,	12.88273,	-8.91226,	4.74686,	-1.86773,	0.38872,]
+    outputCoefficientsA = [0.17481,	-1.26983,	4.15171,	-7.9731,	9.83288,	-7.9731,	4.15171,	-1.26983,	0.17481,]
 
     print(outputCoefficientsA[0])
     filterOrder = len(inputCoefficientsB)
 
-    for x in data:
-        index = 5
+    for x in reader:
+        index = 1
         try:
             a = x[index]
         except IndexError:
@@ -63,7 +70,7 @@ with open('data.txt.4.csv', newline = '') as filter:
 
     Fs = 1000  # sampling rate
     Ts = 1.0/Fs # sampling interval
-    t = np.arange(0,5,Ts) # time vector
+    t = np.arange(0,0.500,Ts) # time vector
 
 
     inputsY = inputs[:len(t)]
@@ -91,7 +98,7 @@ with open('data.txt.4.csv', newline = '') as filter:
     ax[0].plot(t,inputsY)
     ax[0].set_xlabel('Time')
     ax[0].set_ylabel('Amplitude')
-    ax[0].axis((0,5,-10,15))
+    ax[0].axis((0,0.5,-4,4))
 
     ax[1].plot(frq[2:],abs(inputFourier[2:]),'r') # plotting the spectrum
     ax[1].set_xlabel('Freq (Hz)')
@@ -101,7 +108,7 @@ with open('data.txt.4.csv', newline = '') as filter:
     ax[2].plot(t,filteredY)
     ax[2].set_xlabel('Time')
     ax[2].set_ylabel('Amplitude')
-    ax[2].axis((0,5,-10,15))
+    ax[2].axis((0,0.5,-20,20))
     
     ax[3].plot(frq[2:],abs(outputFourier[2:]),'r') # plotting the spectrum
     ax[3].set_xlabel('Freq (Hz)')

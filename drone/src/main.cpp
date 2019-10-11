@@ -12,6 +12,7 @@ long timer;
 float32_t loopTime;
 
 void setup() {
+  Serial.begin(1);
   #define DEBUG
   #ifdef DEBUG
     while(!Serial);
@@ -20,10 +21,10 @@ void setup() {
   ReceiverManager::setupReceivers();
   ReceiverManager::setupAligners();
 
-  while(!ReceiverManager::isReceiving()) {Serial.println(0);};
-  Serial.println("Receiver Active");
-
-  delay(3);
+  while(!ReceiverManager::isReceiving()) {
+    delay(1000);
+    Serial.println(ReceiverManager::isReceiving());
+  };
 
   MotorControlManager::setup();
   timer = micros();

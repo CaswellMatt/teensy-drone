@@ -9,16 +9,19 @@
 #include "MotorControlManager.h"
 #include "MotorSignalController.h"
 
-
+#include <functional>
 
 class MotorNoiseTest : public MenuOptionHandler {
 private:
     long timer;
-    MARG marg;
+    MARG* marg;
 
 public:
 
   MotorNoiseTest();
+  ~MotorNoiseTest() {
+    delete marg;
+  }
 
   virtual void setup() override;
   virtual void printTitle() override;
@@ -28,7 +31,7 @@ public:
   float32_t backLeftPulse   = throttleMapStart;
   float32_t backRightPulse  = throttleMapStart;
 
-  void runMotorTest(MotorSignalController& signalController);
+  void runTestOnMotors(MotorSignalController* motorArray, int motorCount, Vector (MARG::*sensor)());
 
 };
 
