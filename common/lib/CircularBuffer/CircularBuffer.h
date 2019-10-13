@@ -43,7 +43,7 @@ public:
     
     bool arrayValueStillSmallerThanZero = arrayValue < 0;
     if (arrayValueStillSmallerThanZero) arrayValue += size;
-    return *(data + arrayValue);
+    return data[arrayValue];
   }
 
   bool hasFilled() {

@@ -18,7 +18,7 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
 
   SPI.begin();
 
-	m_mpu.init(true);
+	m_mpu.init();
 
 	uint8_t wai = m_mpu.whoami();
 	if (wai == 0x71) {
@@ -41,7 +41,7 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
 
 	m_mpu.calib_acc();
 	m_mpu.calib_mag();
-
+  
   float32_t xSum = 0;
   float32_t ySum = 0;
   float32_t zSum = 0;
@@ -53,6 +53,7 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
     xSum += m_mpu.gyro_data[0];
     ySum += m_mpu.gyro_data[1];
     zSum += m_mpu.gyro_data[2];
+    delay(1);
   }
 
   m_gyroscopeError.v0 = xSum / GYRO_CALIBRATION_COUNT;
@@ -63,7 +64,6 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
 
   readValuesForCalibration();
   
-  // IMU.calibrateGyro();
 }
 
 
@@ -75,15 +75,6 @@ static const float32_t TO_RADIANS = 0.01745329251;
   m_rotationalRates.v0 = (m_mpu.gyro_data[0] - m_gyroscopeError.v0) * TO_RADIANS;
   m_rotationalRates.v1 = (m_mpu.gyro_data[1] - m_gyroscopeError.v1) * TO_RADIANS;
   m_rotationalRates.v2 = (m_mpu.gyro_data[2] - m_gyroscopeError.v2) * TO_RADIANS;
-
-  // filt0.doing(map(m_mpu.accel_data[0], m_accelerationCalbrationMin.v0, m_accelerationCalbrationMax.v0, -G, G));
-  // m_acceleration.v0 = filt0.getCurrent();
-  
-  // filt1.doing(map(m_mpu.accel_data[1], m_accelerationCalbrationMin.v1, m_accelerationCalbrationMax.v1, G, -G));
-  // m_acceleration.v1 = filt1.getCurrent();
-
-  // filt2.doing(map(m_mpu.accel_data[2], m_accelerationCalbrationMin.v2, m_accelerationCalbrationMax.v2, -G, G));
-  // m_acceleration.v2 = filt2.getCurrent();
 
   m_acceleration.v0 = map(m_mpu.accel_data[0], m_accelerationCalbrationMin.v0, m_accelerationCalbrationMax.v0, -G, G);
   m_acceleration.v1 = map(m_mpu.accel_data[1], m_accelerationCalbrationMin.v1, m_accelerationCalbrationMax.v1, G, -G);

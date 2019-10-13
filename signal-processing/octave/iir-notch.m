@@ -531,7 +531,7 @@ filterType = 'stop';
 
 % Transfer function design
 #[b, a]=butter(7, 220/sf2);
-nLowPass      = 6;
+nLowPass      = 5;
 [b, a]=ellip(nLowPass, Rp, Rs, 30/sf2);
 #
 #[b2,a2] = cheby1(n, Rp, Wn, filterType);

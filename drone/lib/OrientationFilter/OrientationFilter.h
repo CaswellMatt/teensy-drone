@@ -8,7 +8,7 @@
 class OrientationFilter {
 
   public:
-    OrientationFilter(bool accelerationSoftwareFilterOn = true);
+    OrientationFilter(MARG* marg);
 
     void update(float32_t deltaT);
 
@@ -17,8 +17,8 @@ class OrientationFilter {
     float32_t getYaw();
 
   private:
+    MARG* m_marg;
     Quaternion m_orientation;
-    MARG m_marg;
 
     Vector m_magneticsPrevious;
     Quaternion calculateAccelerationQuaternion(Vector acceleration);
@@ -29,7 +29,9 @@ class OrientationFilter {
     Quaternion linearInterpolation(Quaternion q, float32_t alpha);
     Quaternion sphericalInterpolation(Quaternion q, float32_t alpha);
 
-    Quaternion calculateComplementaryQuaternion(Quaternion q, float32_t gainFactor) ;
+    Quaternion calculateComplementaryQuaternion(Quaternion q, float32_t gainFactor);
+    
+    float32_t rotateAxisAndReturnAngleFromHorizontal(Vector& vector, float32_t angleOffset);
 
 };
 #endif

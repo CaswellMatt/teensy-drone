@@ -4,46 +4,7 @@
 #include "ReceiverPulseTimer.h"
 #include "MemoryLocations.h"
 #include "Math.h"
-
-
-
-  class ReceiverAligner {
-
-  public:
-    ReceiverAligner(ReceiverPulseTimer* receiverTimer, float32_t minValue, float32_t maxValue, float32_t midValue) : 
-      timer(receiverTimer),
-      min(minValue),
-      max(maxValue),
-      mid(midValue) {};
-
-    ReceiverPulseTimer* timer;
-    float32_t getPulseLength(float32_t& startMapped, 
-                             float32_t& midMapped, 
-                             float32_t& endMapped) {
-      float32_t pulse = timer->getPulseLength() < mid ? 
-        Math::mapfloat(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
-        Math::mapfloat(timer->getPulseLength(), mid, max, midMapped, endMapped); 
-
-      return pulse;
-    }
-
-    float32_t getPulseLength() {
-      float32_t startMapped  = 125;
-      float32_t endMapped    = 250;
-      float32_t midMapped = (startMapped + endMapped) / 2;
-      float32_t pulse = timer->getPulseLength() < mid ? 
-        Math::mapfloat(timer->getPulseLength(), min, mid, startMapped, midMapped) : 
-        Math::mapfloat(timer->getPulseLength(), mid, max, midMapped, endMapped); 
-
-      return pulse;
-    }
-
-  private:
-    float32_t min;
-    float32_t max;
-    float32_t mid;
-    
-  };
+#include "ReceiverAligner.h"
 
 namespace ReceiverManager
 {
@@ -125,6 +86,13 @@ namespace ReceiverManager
     updateMinAndMaxForTimer(min, max, mid, YAW_START);
     yawAligned  = new ReceiverAligner(&yawInput, min, max, mid);
 
+  }
+
+   void destroyAligners() {
+    delete rollAligned;
+    delete pitchAligned;
+    delete throttleAligned;
+    delete yawAligned;
   }
 
   void printPulseLength(String channel, int pulseLength) {

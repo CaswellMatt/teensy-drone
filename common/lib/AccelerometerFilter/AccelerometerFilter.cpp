@@ -4,17 +4,15 @@ AccelerometerFilter::AccelerometerFilter() {
   const int filterSizeLowPass = 6;
 
   m_inputCoefficientsBLowPass = new float32_t[filterSizeLowPass] {
-    0.053527,  -0.034868,   0.053584,   0.053584,  -0.034868,   0.053527
+    0.00059831,	-0.0016424,	0.0010525,	0.0010525,	-0.0016424,	0.00059831,
   };
 
   m_outputCoefficientsALowPass = new float32_t[filterSizeLowPass] {
-    1.00000,  -3.02889,   4.82197,  -4.41558,   2.38256,  -0.61558
+    1,	-4.86228,	9.50417,	-9.33446,	4.60614,	-0.91355,
   };
 
-  
   m_ellipticalLowPassFilter30hz     
     = new IIRFilter(m_inputCoefficientsBLowPass, m_outputCoefficientsALowPass, filterSizeLowPass);
-
 }
 
 AccelerometerFilter::~AccelerometerFilter() {
