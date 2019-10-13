@@ -105,18 +105,24 @@ void Drone::start() {
       float32_t yawPulse =
         ReceiverManager::yawAligned->getPulseLength(controlPulseStart, controlPulseMiddle, controlPulseEnd);
 
-      rollRotationalRateController.update(rollPulse/4, m_marg.getRotationalRates().v1);
-      pitchRotationalRateController.update(pitchPulse/4, -m_marg.getRotationalRates().v0);
-      yawRotationalRateController.update(yawPulse/4, m_marg.getRotationalRates().v2);
+      float32_t rollRatePositiveRightWingDown  =  m_marg.getRotationalRates().v1;
+      float32_t pitchRatePositiveNoseDown      = -m_marg.getRotationalRates().v0;
+      float32_t yawRatePositiveNoseLeft        =  m_marg.getRotationalRates().v2;
 
-            static long printTimer = micros();
+      rollRotationalRateController.update(rollPulse/4, rollRatePositiveRightWingDown);
+      pitchRotationalRateController.update(pitchPulse/4, pitchRatePositiveNoseDown);
+      yawRotationalRateController.update(yawPulse/4, yawRatePositiveNoseLeft);
+
+      static long printTimer = micros();
 
       if (micros() - printTimer > 2000) {
         printTimer = micros();
         // Serial.print(m_marg.getRotationalRates().v0);Serial.print(" ");
         // Serial.print(rollRotationalRateController.getOutput()); Serial.print(" ");
         // Serial.print(rollPulse); Serial.print(" ");
-        Serial.print(pitchPulse); Serial.print(" ");
+        Serial.print("pitch ");Serial.print(m_marg.getRotationalRates().v0); Serial.print(" ");
+        Serial.print("roll ");Serial.print(m_marg.getRotationalRates().v1); Serial.print(" ");
+          Serial.print("yaw ");Serial.print(m_marg.getRotationalRates().v2); Serial.print(" ");
         Serial.println();
       }
 
