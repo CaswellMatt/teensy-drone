@@ -1,14 +1,19 @@
 #include "PIDController.h"
 
-PIDController::PIDController(const float32_t proportionalConstant, 
-              const float32_t integralConstant,
-              const float32_t derivativeConstant) :
-  m_proportionalConstant(proportionalConstant),
-  m_integralConstant(integralConstant),
-  m_derivativeConstant(derivativeConstant),
-  m_currentIntegral(0),
-  m_previousError(0),
-  m_output(0) {
+PIDController::PIDController(
+  const float32_t proportionalConstant, 
+  const float32_t integralConstant,
+  const float32_t derivativeConstant,
+  const float32_t outputLimit,
+  const float32_t integralLimit) :
+    m_proportionalConstant(proportionalConstant),
+    m_integralConstant(integralConstant),
+    m_derivativeConstant(derivativeConstant),
+    m_currentIntegral(0),
+    m_previousError(0),
+    m_outputLimit(outputLimit),
+    m_integralLimit(integralLimit),
+    m_output(0) {
 
 }
 
@@ -20,23 +25,27 @@ void PIDController::update(float32_t setPoint, float32_t actual) {
 
   m_previousError = error;
   
-  const float32_t maximumIntegralValue = 10;
-  
-  if (m_currentIntegral > maximumIntegralValue) {
-    m_currentIntegral = maximumIntegralValue;
-  }
+  auto checkAndLimitValue = [](float32_t &value, float32_t limit) {
+    if (value > limit) {
+      value = limit;
+    }
 
+    if (value < -limit) {
+      value = -limit;
+    }
+  };
+
+  checkAndLimitValue(m_currentIntegral, m_integralLimit);
+  
   m_output = proportional + m_currentIntegral + derivative;
+  checkAndLimitValue(m_output, m_outputLimit);
 
-  const float32_t maxOutput = 50;
+}
 
-  if (m_output > maxOutput) {
-    m_output = maxOutput;
-  }
-  
-  if (m_output < -maxOutput) {
-    m_output = -maxOutput;
-  }
+void PIDController::reset()
+{
+  m_previousError   = 0;
+  m_currentIntegral = 0;
 }
 
 float32_t PIDController::getOutput() {

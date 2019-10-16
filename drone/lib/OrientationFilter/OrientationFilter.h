@@ -33,5 +33,7 @@ class OrientationFilter {
     
     float32_t rotateAxisAndReturnAngleFromHorizontal(Vector& vector, float32_t angleOffset);
 
+    void debugPrint();
+
 };
 #endif

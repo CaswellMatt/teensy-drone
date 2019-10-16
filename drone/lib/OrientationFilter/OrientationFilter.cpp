@@ -45,8 +45,6 @@ void OrientationFilter::update(float32_t deltaT) {
   static float32_t previousGain = 0;
   float32_t gain = gainFactor(error, 0.1, 0.3);
 
-  // Serial.println(error);
-
   //check for error when in high acceleration movement
   //so you dont trust incorrect values if the previous value
   //was not trusted and has low gain
@@ -68,79 +66,29 @@ void OrientationFilter::update(float32_t deltaT) {
   ).asUnit();
 
   bool magneticHasChanged = m_magneticsPrevious != m_marg->getMagnetics();
-  // if (magneticHasChanged) {
+  bool useMag = false;
+  if (magneticHasChanged && useMag) {
 
-  //   float32_t error = abs(m_marg->getMagnetics().magnitude() - 1);
+    float32_t error = abs(m_marg->getMagnetics().magnitude() - 1);
 
-  //   Vector magneticNorth = orientationPrime.conjugate().rotate(m_marg->getMagnetics().asUnit());
+    Vector magneticNorth = orientationPrime.conjugate().rotate(m_marg->getMagnetics().asUnit());
 
-  //   Quaternion orientationChangeMagnetics
-  //             = calculateDeltaMagneticsQuaternion(magneticNorth);
+    Quaternion orientationChangeMagnetics
+              = calculateDeltaMagneticsQuaternion(magneticNorth);
 
-  // float32_t alpha = 0.3;
-  // float32_t alphaAdaptive = gainFactor(error, 0.1, 0.2) * alpha;
-  //   Quaternion complimentaryOrientationForChangeInMagnetics
-  //             = calculateComplementaryQuaternion(orientationChangeMagnetics, alphaAdaptive);
+  float32_t alpha = 0.3;
+  float32_t alphaAdaptive = gainFactor(error, 0.1, 0.2) * alpha;
+    Quaternion complimentaryOrientationForChangeInMagnetics
+              = calculateComplementaryQuaternion(orientationChangeMagnetics, alphaAdaptive);
 
 
-  //   m_orientation = orientationPrime.multiply(
-  //     complimentaryOrientationForChangeInMagnetics
-  //   ).asUnit();
+    m_orientation = orientationPrime.multiply(
+      complimentaryOrientationForChangeInMagnetics
+    ).asUnit();
 
-  // } else {
+  } else {
     m_orientation = orientationPrime;
-  // }
-
-
-  // static long printTimer = micros();
-
-  // if (micros() - printTimer > 100000) {
-  //   printTimer = micros();
-
-  // Serial.print(gain);;Serial.print(" ");
-  //   Serial.print(magneticNorth.v0, 5);Serial.print(" ");
-  //   Serial.print(magneticNorth.v1, 5);Serial.print(" ");
-  //   Serial.print(magneticNorth.v2, 5);Serial.print(" ");
-
-  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q0, 5);Serial.print(" ");
-  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q1, 5);Serial.print(" ");
-  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q2, 5);Serial.print(" ");
-  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q3, 5);Serial.print(" ");
-
-    // Serial.print(m_marg->getAcceleration().v0, 5);Serial.print(" ");
-    // Serial.print(m_marg->getAcceleration().v1, 5);Serial.print(" ");
-    // Serial.print(m_marg->getAcceleration().v2, 5);Serial.print(" ");
-
-    // Serial.print(m_marg->getMagnetics().v0, 5);Serial.print(" ");
-    // Serial.print(m_marg->getMagnetics().v1, 5);Serial.print(" ");
-    // Serial.print(m_marg->getMagnetics().v2, 5);Serial.print(" ");
-
-    // Serial.print(m_marg->getRotationalRates().v0, 5);Serial.print(" ");
-    // Serial.print(m_marg->getRotationalRates().v1, 5);Serial.print(" ");
-    // Serial.print(m_marg->getRotationalRates().v2, 5);Serial.print(" ");
-
-    // Serial.print(m_orientation.q0, 5);Serial.print(" ");
-    // Serial.print(m_orientation.q1, 5);Serial.print(" ");
-    // Serial.print(m_orientation.q2, 5);Serial.print(" ");
-    // Serial.print(m_orientation.q3, 5);Serial.print(" ");
-
-    // Serial.print(m_marg->getRotationalRates().v0, 5);Serial.print(" ");
-    // Serial.print(m_marg->getRotationalRates().v1, 5);Serial.print(" ");
-    // Serial.print(m_marg->getRotationalRates().v2, 5);Serial.print(" ");
-
-    // Serial.print(m_marg->getAcceleration().v0, 5);Serial.print(" ");
-    // Serial.print(m_marg->getAcceleration().v1, 5);Serial.print(" ");
-    // Serial.print(m_marg->getAcceleration().v2, 5);Serial.print(" ");
-
-    // Serial.print(m_marg->getMagnetics().v0, 5);Serial.print(" ");
-    // Serial.print(m_marg->getMagnetics().v1, 5);Serial.print(" ");
-    // Serial.print(m_marg->getMagnetics().v2, 5);Serial.print(" ");
-
-    // Serial.print(getRoll());Serial.print(" ");
-    // Serial.print(getPitch());Serial.print(" ");
-
-  //   Serial.println();
-  // }
+  }
 
   m_magneticsPrevious = m_marg->getMagnetics();
 }
@@ -159,13 +107,16 @@ float32_t OrientationFilter::rotateAxisAndReturnAngleFromHorizontal(Vector& vect
   float32_t angle = atan2(axisRelativeToDrone.v2, xAndY);
   float32_t angleWithOffsetForMARGPositionOffsetOnBody = (angle - angleOffset);
 
-  // negate as conjugate rotates back to relative position
   // TODO: write a better explanation for this
+  /*  need to find axis position relative to drone,
+      to do this use the conjugate (same as inverse for unit quaternion).
+      
+   */
   return -angleWithOffsetForMARGPositionOffsetOnBody;
 }
 
 float32_t OrientationFilter::getRoll() {
-  const float32_t rollOffset = -0.12;
+  const float32_t rollOffset = -0.11;
   Vector xAxisPerpendicularToDroneBodyThatChangesWithRoll(1, 0, 0);
   return rotateAxisAndReturnAngleFromHorizontal(
     xAxisPerpendicularToDroneBodyThatChangesWithRoll, 
@@ -174,7 +125,7 @@ float32_t OrientationFilter::getRoll() {
 
 
 float32_t OrientationFilter::getPitch() {
-  const float32_t pitchOffset = 0;
+  const float32_t pitchOffset = -0.03;
   Vector yAxisParrelelWithDroneBodyThatChangesWithPitch(0, 1, 0);
   return  rotateAxisAndReturnAngleFromHorizontal(
     yAxisParrelelWithDroneBodyThatChangesWithPitch, 
@@ -275,3 +226,55 @@ Quaternion OrientationFilter::calculateComplementaryQuaternion(Quaternion q, flo
     return linearInterpolation(q, alpha);
   }
 };
+
+void OrientationFilter::debugPrint() {
+  static long printTimer = micros();
+
+  if (micros() - printTimer > 100000) {
+    printTimer = micros();
+
+  // Serial.print(gain);;Serial.print(" ");
+  //   Serial.print(magneticNorth.v0, 5);Serial.print(" ");
+  //   Serial.print(magneticNorth.v1, 5);Serial.print(" ");
+  //   Serial.print(magneticNorth.v2, 5);Serial.print(" ");
+
+  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q0, 5);Serial.print(" ");
+  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q1, 5);Serial.print(" ");
+  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q2, 5);Serial.print(" ");
+  //   Serial.print(complimentaryOrientationForChangeInAcceleration.q3, 5);Serial.print(" ");
+
+    // Serial.print(m_marg->getAcceleration().v0, 5);Serial.print(" ");
+    // Serial.print(m_marg->getAcceleration().v1, 5);Serial.print(" ");
+    // Serial.print(m_marg->getAcceleration().v2, 5);Serial.print(" ");
+
+    // Serial.print(m_marg->getMagnetics().v0, 5);Serial.print(" ");
+    // Serial.print(m_marg->getMagnetics().v1, 5);Serial.print(" ");
+    // Serial.print(m_marg->getMagnetics().v2, 5);Serial.print(" ");
+
+    // Serial.print(m_marg->getRotationalRates().v0, 5);Serial.print(" ");
+    // Serial.print(m_marg->getRotationalRates().v1, 5);Serial.print(" ");
+    // Serial.print(m_marg->getRotationalRates().v2, 5);Serial.print(" ");
+
+    Serial.print(m_orientation.q0, 5);Serial.print(" ");
+    Serial.print(m_orientation.q1, 5);Serial.print(" ");
+    Serial.print(m_orientation.q2, 5);Serial.print(" ");
+    Serial.print(m_orientation.q3, 5);Serial.print(" ");
+
+    // Serial.print(m_marg->getRotationalRates().v0, 5);Serial.print(" ");
+    // Serial.print(m_marg->getRotationalRates().v1, 5);Serial.print(" ");
+    // Serial.print(m_marg->getRotationalRates().v2, 5);Serial.print(" ");
+
+    // Serial.print(m_marg->getAcceleration().v0, 5);Serial.print(" ");
+    // Serial.print(m_marg->getAcceleration().v1, 5);Serial.print(" ");
+    // Serial.print(m_marg->getAcceleration().v2, 5);Serial.print(" ");
+
+    // Serial.print(m_marg->getMagnetics().v0, 5);Serial.print(" ");
+    // Serial.print(m_marg->getMagnetics().v1, 5);Serial.print(" ");
+    // Serial.print(m_marg->getMagnetics().v2, 5);Serial.print(" ");
+
+    // Serial.print(getRoll());Serial.print(" ");
+    // Serial.print(getPitch());Serial.print(" ");
+
+    Serial.println();
+  }
+}
