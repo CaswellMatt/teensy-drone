@@ -64,25 +64,22 @@ void ReceiverCalibrationHandler::setup() {
 
 void ReceiverCalibrationHandler::printReceiver(String receiverName, int startAddress) {
 
-  float32_t min;
   float32_t max;
+  float32_t min;
   float32_t mid;
 
   int eeAddress = startAddress;
-  Serial.println(eeAddress);
-  EEPROM.get(eeAddress, min);
-
-  eeAddress += sizeof(float32_t);
-  Serial.println(eeAddress);
   EEPROM.get(eeAddress, max);
 
   eeAddress += sizeof(float32_t);
-  Serial.println(eeAddress);
+  EEPROM.get(eeAddress, min);
+
+  eeAddress += sizeof(float32_t);
   EEPROM.get(eeAddress, mid);
 
   Serial.print(receiverName); Serial.print(" ");
-  Serial.print("Max "); Serial.print(max); Serial.print(" ");
   Serial.print("Min "); Serial.print(min); Serial.print(" ");
+  Serial.print("Max "); Serial.print(max); Serial.print(" ");
   Serial.print("Mid "); Serial.print(mid); Serial.println();
 };
 

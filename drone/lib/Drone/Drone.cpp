@@ -70,7 +70,6 @@ bool Drone::motorsAreActive() {
 
     bool yawLowerThanThreshold = currentYawPulse <= lowerYawThreshold;
     bool yawAboveThreshold = currentYawPulse >= upperYawThreshold;
-
     if (yawLowerThanThreshold) {
       isActive = true;
     } else if (yawAboveThreshold) {
@@ -88,13 +87,13 @@ void Drone::start() {
 
   const float32_t Kp = 10;
   const float32_t Ki = 0.01;
-  const float32_t Kd = 5;
+  const float32_t Kd = 1;
   PIDController rollRotationalRateController(Kp, Ki, Kd, outputLimit, integralLimit);
   PIDController pitchRotationalRateController(Kp, Ki, Kd, outputLimit, integralLimit);
   PIDController yawRotationalRateController(Kp * 2, Ki, Kd, outputLimit, integralLimit);
 
-  const float32_t KpAngle = 10;
-  const float32_t KiAngle = 0.01;
+  const float32_t KpAngle = 30;
+  const float32_t KiAngle = 0.00;
   const float32_t KdAngle = 0;
   PIDController rollAngleController(KpAngle, KiAngle, KdAngle, outputLimit, integralLimit);
   PIDController pitchAngleController(KpAngle, KiAngle, KdAngle, outputLimit, integralLimit);
@@ -102,7 +101,6 @@ void Drone::start() {
   while(1) {
 
     m_orientationFilter.update(LOOPTIME_S);
-
     if (motorsAreActive()) {
 
       auto pulseToControlSetpoint = [&](ReceiverAligner* aligner) {
@@ -128,14 +126,14 @@ void Drone::start() {
       rollAngleController.update(0, m_orientationFilter.getRoll());
       pitchAngleController.update(0, m_orientationFilter.getPitch());
 
-      static long printTimer = micros();
+      // static long printTimer = micros();
 
-      if (micros() - printTimer > 2000) {
-        printTimer = micros();
-        Serial.print("pitch "); Serial.print(m_orientationFilter.getPitch(),5); Serial.print(" ");
-        Serial.print("roll "); Serial.print(m_orientationFilter.getRoll(),5); Serial.print(" ");
-        Serial.println();
-      }
+      // if (micros() - printTimer > 2000) {
+      //   printTimer = micros();
+      //   Serial.print("pitch "); Serial.print(m_orientationFilter.getPitch(),5); Serial.print(" ");
+      //   Serial.print("roll "); Serial.print(m_orientationFilter.getRoll(),5); Serial.print(" ");
+      //   Serial.println();
+      // }
 
       float32_t rollOutputPID  = rollRotationalRateController.getOutput() + rollAngleController.getOutput();
       float32_t pitchOutputPID = pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
