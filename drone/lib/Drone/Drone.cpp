@@ -28,11 +28,11 @@ Drone::~Drone() {
 }
 
 void Drone::setup() {
-  // Serial.begin(1);
+  Serial.begin(1);
   // #define DEBUG
-  // #ifdef DEBUG
-  //   while(!Serial);
-  // #endif
+  #ifdef DEBUG
+    while(!Serial);
+  #endif
 
   ReceiverManager::setupReceivers();
   ReceiverManager::setupAligners();

@@ -4,17 +4,23 @@
 
 #include <arm_math.h>
 
-#define ROLL_INDEX        1
-#define PITCH_INDEX       2
-#define THROTTLE_INDEX    3
-#define YAW_INDEX         4
-#define PRINT_INDEX       5
-#define PRINT_SAVED_INDEX 6
+#define ROLL_INDEX           1
+#define PITCH_INDEX          2
+#define THROTTLE_INDEX       3
+#define YAW_INDEX            4
+#define TOP_LEFT_SWITCH_INDEX  5
+#define TOP_RIGHT_SWITCH_INDEX 6
+#define LAST_CHANNEL_INDEX   7
+#define PRINT_INDEX          8
+#define PRINT_SAVED_INDEX    9
 
 const String rollOptionText = "Calibrate Roll";
 const String pitchOptionText = "Calibrate Pitch";
 const String yawOptionText = "Calibrate Yaw";
 const String throttleOptionText = "Calibrate Throttle";
+const String topLeftSwitchOptionText = "Calibrate Top Left Dial";
+const String topRightSwitchOptionText = "Calibrate Top Right Dial";
+const String lastChannelOptionText = "Calibrate Last Channel";
 const String printOptionText = "Print Receiver Values";
 const String printSavedValuesText = "Print Saved Receiver Endpoints";
 
@@ -32,11 +38,19 @@ void ReceiverCalibrationHandler::setup() {
   auto pitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
   auto yawCalibrator = [this]() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
   auto throttleCalibrator = [this]() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
+  auto topLeftSwitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::topLeftSwitchInput, TOP_LEFT_SWITCH_START); };
+  auto topRightSwitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::topRightSwitchInput, TOP_RIGHT_SWITCH_START); };
+  auto lastChannelCalibrator = [this]() { calibrateReceiver(&ReceiverManager::lastChannelInput, LAST_CHANNEL_START); };
+
 
   addOption(ROLL_INDEX, rollCalibrator, rollOptionText);
   addOption(PITCH_INDEX, pitchCalibrator, pitchOptionText);
   addOption(YAW_INDEX, yawCalibrator, yawOptionText);
   addOption(THROTTLE_INDEX, throttleCalibrator, throttleOptionText);
+  addOption(TOP_LEFT_SWITCH_INDEX, topLeftSwitchCalibrator, topLeftSwitchOptionText);
+  addOption(TOP_RIGHT_SWITCH_INDEX, topRightSwitchCalibrator, topRightSwitchOptionText);
+  addOption(LAST_CHANNEL_INDEX, lastChannelCalibrator, lastChannelOptionText);
+
 
   auto printAll = [this]() { 
     for (int i = 0; i < 1000; ++i) {
@@ -53,7 +67,9 @@ void ReceiverCalibrationHandler::setup() {
     printReceiver("pitch", PITCH_START);
     printReceiver("throttle", THROTTLE_START);
     printReceiver("yaw", YAW_START);
-    
+    printReceiver("top left dial", TOP_LEFT_SWITCH_START);
+    printReceiver("top right dial", TOP_RIGHT_SWITCH_START);
+    printReceiver("last channel", LAST_CHANNEL_START);
   };
 
   addOption({PRINT_SAVED_INDEX}, printSaved, printSavedValuesText);
