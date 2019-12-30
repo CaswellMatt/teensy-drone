@@ -23,7 +23,7 @@ void MotorNoiseTest::setup() {
 
   const int singleMotorTestCount = 1;
 
-  Vector (MARG::*sensor)() = &MARG::getMagnetics;
+  Vector (MARG::*sensor)() = &MARG::getRotationalRates;
 
   auto backLeftMotorFunctionCall = [this, sensor]() { 
     runTestOnMotors(&MotorControlManager::backLeft, singleMotorTestCount, sensor); 
@@ -61,7 +61,7 @@ void MotorNoiseTest::setup() {
 }
 
 void MotorNoiseTest::printTitle() {
-  Serial.println("Motor Noise Test");
+  DEBUG_SERIAL.println("Motor Noise Test");
 }
 
 void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int motorCount, Vector (MARG::*sensor)()) {
@@ -126,7 +126,7 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
     if (bufferIndex == BUFFER_SIZE) exit = true;
 
     if (bufferIndex > BUFFER_SIZE) {
-      Serial.println("lost control of buffer index"); exit = true;
+      DEBUG_SERIAL.println("lost control of buffer index"); exit = true;
       delay(10000);
     }
   }
@@ -135,7 +135,7 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
   arm_status returnCode = arm_cfft_radix4_init_f32(&fftComplexInstance, fftSize, ifftFlag, doBitReverse);
 
   if (returnCode != ARM_MATH_SUCCESS) {
-    Serial.println("Incorrect fft init");
+    DEBUG_SERIAL.println("Incorrect fft init");
     return;
   }
 
@@ -162,19 +162,19 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
   calculateFFT(bufferY, fftComplexInstance, srcY, destY);
   calculateFFT(bufferZ, fftComplexInstance, srcZ, destZ);
 
-  Serial.print("fftOutputX rawX");
-  Serial.print(" fftOutputY rawY");
-  Serial.println(" fftOutputZ rawZ");
+  DEBUG_SERIAL.print("fftOutputX rawX");
+  DEBUG_SERIAL.print(" fftOutputY rawY");
+  DEBUG_SERIAL.println(" fftOutputZ rawZ");
   uint32_t halfFFT = static_cast<uint32_t>(fftSize/2);
   for (uint32_t i = 0; i < halfFFT; i++) {   
     int indexForRealValues = 2*i;
 
-    Serial.print(destX[i], 5); Serial.print(" "); 
-    Serial.print(srcX[indexForRealValues], 5); Serial.print(" "); 
-    Serial.print(destY[i], 5); Serial.print(" "); 
-    Serial.print(srcY[indexForRealValues], 5); Serial.print(" "); 
-    Serial.print(destZ[i], 5); Serial.print(" "); 
-    Serial.println(srcZ[indexForRealValues], 5);
+    DEBUG_SERIAL.print(destX[i], 5); DEBUG_SERIAL.print(" "); 
+    DEBUG_SERIAL.print(srcX[indexForRealValues], 5); DEBUG_SERIAL.print(" "); 
+    DEBUG_SERIAL.print(destY[i], 5); DEBUG_SERIAL.print(" "); 
+    DEBUG_SERIAL.print(srcY[indexForRealValues], 5); DEBUG_SERIAL.print(" "); 
+    DEBUG_SERIAL.print(destZ[i], 5); DEBUG_SERIAL.print(" "); 
+    DEBUG_SERIAL.println(srcZ[indexForRealValues], 5);
   }
 
   backLeftPulse=throttleMapStart;

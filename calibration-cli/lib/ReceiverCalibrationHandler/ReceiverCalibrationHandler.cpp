@@ -8,19 +8,13 @@
 #define PITCH_INDEX          2
 #define THROTTLE_INDEX       3
 #define YAW_INDEX            4
-#define TOP_LEFT_SWITCH_INDEX  5
-#define TOP_RIGHT_SWITCH_INDEX 6
-#define LAST_CHANNEL_INDEX   7
-#define PRINT_INDEX          8
-#define PRINT_SAVED_INDEX    9
+#define PRINT_INDEX          5
+#define PRINT_SAVED_INDEX    6
 
 const String rollOptionText = "Calibrate Roll";
 const String pitchOptionText = "Calibrate Pitch";
 const String yawOptionText = "Calibrate Yaw";
 const String throttleOptionText = "Calibrate Throttle";
-const String topLeftSwitchOptionText = "Calibrate Top Left Dial";
-const String topRightSwitchOptionText = "Calibrate Top Right Dial";
-const String lastChannelOptionText = "Calibrate Last Channel";
 const String printOptionText = "Print Receiver Values";
 const String printSavedValuesText = "Print Saved Receiver Endpoints";
 
@@ -29,7 +23,7 @@ ReceiverCalibrationHandler::ReceiverCalibrationHandler() {
 }
 
 void ReceiverCalibrationHandler::printTitle() {
-  Serial.println("Receiver Calibration Menu");
+  DEBUG_SERIAL.println("Receiver Calibration Menu");
 }
 
 void ReceiverCalibrationHandler::setup() {
@@ -38,24 +32,16 @@ void ReceiverCalibrationHandler::setup() {
   auto pitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
   auto yawCalibrator = [this]() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
   auto throttleCalibrator = [this]() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
-  auto topLeftSwitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::topLeftSwitchInput, TOP_LEFT_SWITCH_START); };
-  auto topRightSwitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::topRightSwitchInput, TOP_RIGHT_SWITCH_START); };
-  auto lastChannelCalibrator = [this]() { calibrateReceiver(&ReceiverManager::lastChannelInput, LAST_CHANNEL_START); };
-
 
   addOption(ROLL_INDEX, rollCalibrator, rollOptionText);
   addOption(PITCH_INDEX, pitchCalibrator, pitchOptionText);
   addOption(YAW_INDEX, yawCalibrator, yawOptionText);
   addOption(THROTTLE_INDEX, throttleCalibrator, throttleOptionText);
-  addOption(TOP_LEFT_SWITCH_INDEX, topLeftSwitchCalibrator, topLeftSwitchOptionText);
-  addOption(TOP_RIGHT_SWITCH_INDEX, topRightSwitchCalibrator, topRightSwitchOptionText);
-  addOption(LAST_CHANNEL_INDEX, lastChannelCalibrator, lastChannelOptionText);
-
 
   auto printAll = [this]() { 
     for (int i = 0; i < 1000; ++i) {
       ReceiverManager::printAllPulseLengths();
-      Serial.println();
+      DEBUG_SERIAL.println();
     }
   };
 
@@ -67,9 +53,7 @@ void ReceiverCalibrationHandler::setup() {
     printReceiver("pitch", PITCH_START);
     printReceiver("throttle", THROTTLE_START);
     printReceiver("yaw", YAW_START);
-    printReceiver("top left dial", TOP_LEFT_SWITCH_START);
-    printReceiver("top right dial", TOP_RIGHT_SWITCH_START);
-    printReceiver("last channel", LAST_CHANNEL_START);
+
   };
 
   addOption({PRINT_SAVED_INDEX}, printSaved, printSavedValuesText);
@@ -93,18 +77,18 @@ void ReceiverCalibrationHandler::printReceiver(String receiverName, int startAdd
   eeAddress += sizeof(float32_t);
   EEPROM.get(eeAddress, mid);
 
-  Serial.print(receiverName); Serial.print(" ");
-  Serial.print("Min "); Serial.print(min); Serial.print(" ");
-  Serial.print("Max "); Serial.print(max); Serial.print(" ");
-  Serial.print("Mid "); Serial.print(mid); Serial.println();
+  DEBUG_SERIAL.print(receiverName); DEBUG_SERIAL.print(" ");
+  DEBUG_SERIAL.print("Min "); DEBUG_SERIAL.print(min); DEBUG_SERIAL.print(" ");
+  DEBUG_SERIAL.print("Max "); DEBUG_SERIAL.print(max); DEBUG_SERIAL.print(" ");
+  DEBUG_SERIAL.print("Mid "); DEBUG_SERIAL.print(mid); DEBUG_SERIAL.println();
 };
 
 
 const int RECEIVER_PULSE_COUNT_TO_AVERAGE = 100;
 
 void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, int eepromStartAddress) {
-  Serial.println("Lets collect the max for this receiver channel");
-  Serial.println("Move the stick to the max position");
+  DEBUG_SERIAL.println("Lets collect the max for this receiver channel");
+  DEBUG_SERIAL.println("Move the stick to the max position");
   delay(5000);
 
   auto getAveragePulseLengthForThisTimer = [](ReceiverPulseTimer* timer, int size) {
@@ -122,38 +106,38 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
 
   int eeAddress = eepromStartAddress;
 
-  Serial.println(eeAddress);
+  DEBUG_SERIAL.println(eeAddress);
   float32_t max = getAveragePulseLengthForThisTimer(timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   EEPROM.put(eeAddress, max);
-  Serial.println("done");
-  Serial.print("Max = ");Serial.println(max);
-  Serial.println();
+  DEBUG_SERIAL.println("done");
+  DEBUG_SERIAL.print("Max = ");DEBUG_SERIAL.println(max);
+  DEBUG_SERIAL.println();
   delay(500);
 
-  Serial.println("Lets collect the min for this receiver channel");
-  Serial.println("Move the stick to the min position");
+  DEBUG_SERIAL.println("Lets collect the min for this receiver channel");
+  DEBUG_SERIAL.println("Move the stick to the min position");
   delay(5000);
 
   float32_t min = getAveragePulseLengthForThisTimer(timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   eeAddress += sizeof(float32_t);
-  Serial.println(eeAddress);
+  DEBUG_SERIAL.println(eeAddress);
   EEPROM.put(eeAddress, min);
-  Serial.println("done");
-  Serial.print("Min = ");Serial.println(min);
-  Serial.println();
+  DEBUG_SERIAL.println("done");
+  DEBUG_SERIAL.print("Min = ");DEBUG_SERIAL.println(min);
+  DEBUG_SERIAL.println();
   delay(500);
 
-  Serial.println("Lets collect the centre for this receiver channel");
-  Serial.println("Move the stick to the centre position");
+  DEBUG_SERIAL.println("Lets collect the centre for this receiver channel");
+  DEBUG_SERIAL.println("Move the stick to the centre position");
   delay(5000);
 
   float32_t mid = getAveragePulseLengthForThisTimer(timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   eeAddress += sizeof(float32_t);
-  Serial.println(eeAddress);
+  DEBUG_SERIAL.println(eeAddress);
   EEPROM.put(eeAddress, mid);
-  Serial.println("done");
-  Serial.print("Mid = ");Serial.println(mid);
-  Serial.println();
+  DEBUG_SERIAL.println("done");
+  DEBUG_SERIAL.print("Mid = ");DEBUG_SERIAL.println(mid);
+  DEBUG_SERIAL.println();
   delay(500);
 
 };

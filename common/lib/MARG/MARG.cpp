@@ -8,6 +8,37 @@
 
 #define SS_PIN   10 
 
+namespace {
+  //right wing down for positive roll
+  //nose down for positive pitch
+  //nose right for positive roll
+
+  //pitch acts through xz plane around y
+  //roll acts through yz plane around x
+  //yaw acts through xy plane around z
+
+  //x axis is positive from back to nose
+  //y axis is positive from right to left
+  //z axis is positive from top to bottom
+
+  const int xAxisIndex = 0;
+  const int yAxisIndex = 1;
+  const int zAxisIndex = 2;
+
+  const int rollAxisIndex = 0;
+  const int pitchAxisIndex = 1;
+  const int yawAxisIndex = 2;
+
+  const int direction = 1;
+  const int gyroXDirection = -direction;
+  const int gyroYDirection = -direction;
+  const int gyroZDirection = direction;
+
+  const int accelXDirection = direction;
+  const int accelYDirection = -direction;
+  const int accelZDirection = direction;
+
+}
 
 MARG::MARG(bool accelerationSoftwareFiltersOn) : 
   m_mpu(SPI_CLOCK, SS_PIN),
@@ -22,21 +53,21 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
 
 	uint8_t wai = m_mpu.whoami();
 	if (wai == 0x71) {
-		Serial.println("Successful connection");
+		DEBUG_SERIAL.println("Successful connection");
 	}
 	else{
-		Serial.print("Failed connection: ");
-		Serial.println(wai, HEX);
+		DEBUG_SERIAL.print("Failed connection: ");
+		DEBUG_SERIAL.println(wai, HEX);
 	}
 
 
 	uint8_t wai_AK8963 = m_mpu.AK8963_whoami();
 	if (wai_AK8963 == 0x48){
-		Serial.println("Successful connection to mag");
+		DEBUG_SERIAL.println("Successful connection to mag");
 	}
 	else{
-		Serial.print("Failed connection to mag: ");
-		Serial.println(wai_AK8963, HEX);
+		DEBUG_SERIAL.print("Failed connection to mag: ");
+		DEBUG_SERIAL.println(wai_AK8963, HEX);
 	}
 
 	m_mpu.calib_acc();
@@ -50,9 +81,9 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
   for (int i = 0; i < GYRO_CALIBRATION_COUNT; ++i)
   {
     m_mpu.read_all();
-    xSum += m_mpu.gyro_data[0];
-    ySum += m_mpu.gyro_data[1];
-    zSum += m_mpu.gyro_data[2];
+    xSum += m_mpu.gyro_data[rollAxisIndex];
+    ySum += m_mpu.gyro_data[pitchAxisIndex];
+    zSum += m_mpu.gyro_data[yawAxisIndex];
     delay(1);
   }
 
@@ -69,16 +100,16 @@ MARG::MARG(bool accelerationSoftwareFiltersOn) :
 
 void MARG::read() {
 
-static const float32_t TO_RADIANS = 0.01745329251;
+  static const float32_t TO_RADIANS = 0.01745329251;
 	m_mpu.read_all();
 
-  m_rotationalRates.v0 = (m_mpu.gyro_data[0] - m_gyroscopeError.v0) * TO_RADIANS;
-  m_rotationalRates.v1 = (m_mpu.gyro_data[1] - m_gyroscopeError.v1) * TO_RADIANS;
-  m_rotationalRates.v2 = (m_mpu.gyro_data[2] - m_gyroscopeError.v2) * TO_RADIANS;
+  m_rotationalRates.v0 = gyroXDirection * (m_mpu.gyro_data[rollAxisIndex]  - m_gyroscopeError.v0) * TO_RADIANS;
+  m_rotationalRates.v1 = gyroYDirection * (m_mpu.gyro_data[pitchAxisIndex] - m_gyroscopeError.v1) * TO_RADIANS;
+  m_rotationalRates.v2 = gyroZDirection * (m_mpu.gyro_data[yawAxisIndex]   - m_gyroscopeError.v2) * TO_RADIANS;
 
-  m_acceleration.v0 = map(m_mpu.accel_data[0], m_accelerationCalbrationMin.v0, m_accelerationCalbrationMax.v0, -G, G);
-  m_acceleration.v1 = map(m_mpu.accel_data[1], m_accelerationCalbrationMin.v1, m_accelerationCalbrationMax.v1, G, -G);
-  m_acceleration.v2 = map(m_mpu.accel_data[2], m_accelerationCalbrationMin.v2, m_accelerationCalbrationMax.v2, -G, G);
+  m_acceleration.v0 = accelXDirection * map(m_mpu.accel_data[xAxisIndex], m_accelerationCalbrationMin.v0, m_accelerationCalbrationMax.v0, -G, G);
+  m_acceleration.v1 = accelYDirection * map(m_mpu.accel_data[yAxisIndex], m_accelerationCalbrationMin.v1, m_accelerationCalbrationMax.v1, -G, G);
+  m_acceleration.v2 = accelZDirection * map(m_mpu.accel_data[zAxisIndex], m_accelerationCalbrationMin.v2, m_accelerationCalbrationMax.v2, -G, G);
   
   if (m_accelerationSoftwareFiltersOn)
   {
@@ -93,9 +124,9 @@ static const float32_t TO_RADIANS = 0.01745329251;
   }
   
   //TODO: can use data read interrupts to avoid reading mag data too often when not changed?
-  m_magnetics.v0 = map(m_mpu.mag_data[0], m_magneticsCalibrationMin.v0, m_magneticsCalibrationMax.v0, -1, 1);
-  m_magnetics.v1 = map(m_mpu.mag_data[1], m_magneticsCalibrationMin.v1, m_magneticsCalibrationMax.v1, -1, 1);
-  m_magnetics.v2 = map(m_mpu.mag_data[2], m_magneticsCalibrationMin.v2, m_magneticsCalibrationMax.v2, -1, 1);
+  m_magnetics.v0 = map(m_mpu.mag_data[xAxisIndex], m_magneticsCalibrationMin.v0, m_magneticsCalibrationMax.v0, -1, 1);
+  m_magnetics.v1 = map(m_mpu.mag_data[yAxisIndex], m_magneticsCalibrationMin.v1, m_magneticsCalibrationMax.v1, -1, 1);
+  m_magnetics.v2 = map(m_mpu.mag_data[zAxisIndex], m_magneticsCalibrationMin.v2, m_magneticsCalibrationMax.v2, -1, 1);
 
 }
 
@@ -140,21 +171,21 @@ void MARG::readValuesForCalibration() {
   eeAddress += sizeof(float32_t);
   EEPROM.get(eeAddress, m_magneticsCalibrationMax.v2);
 
-  // Serial.print("accelX max ");Serial.println(m_accelerationCalbrationMax.v0);
-  // Serial.print("accelY max ");Serial.println(m_accelerationCalbrationMax.v1);
-  // Serial.print("accelZ max ");Serial.println(m_accelerationCalbrationMax.v2);
+  // DEBUG_SERIAL.print("accelX max ");DEBUG_SERIAL.println(m_accelerationCalbrationMax.v0);
+  // DEBUG_SERIAL.print("accelY max ");DEBUG_SERIAL.println(m_accelerationCalbrationMax.v1);
+  // DEBUG_SERIAL.print("accelZ max ");DEBUG_SERIAL.println(m_accelerationCalbrationMax.v2);
 
-  // Serial.print("accelX min ");Serial.println(m_accelerationCalbrationMin.v0);
-  // Serial.print("accelY min ");Serial.println(m_accelerationCalbrationMin.v1);
-  // Serial.print("accelZ min ");Serial.println(m_accelerationCalbrationMin.v2);
+  // DEBUG_SERIAL.print("accelX min ");DEBUG_SERIAL.println(m_accelerationCalbrationMin.v0);
+  // DEBUG_SERIAL.print("accelY min ");DEBUG_SERIAL.println(m_accelerationCalbrationMin.v1);
+  // DEBUG_SERIAL.print("accelZ min ");DEBUG_SERIAL.println(m_accelerationCalbrationMin.v2);
 
 
-  // Serial.print("magX max ");Serial.println(m_magneticsCalibrationMax.v0);
-  // Serial.print("magY max ");Serial.println(m_magneticsCalibrationMax.v1);
-  // Serial.print("magZ max ");Serial.println(m_magneticsCalibrationMax.v2);
+  // DEBUG_SERIAL.print("magX max ");DEBUG_SERIAL.println(m_magneticsCalibrationMax.v0);
+  // DEBUG_SERIAL.print("magY max ");DEBUG_SERIAL.println(m_magneticsCalibrationMax.v1);
+  // DEBUG_SERIAL.print("magZ max ");DEBUG_SERIAL.println(m_magneticsCalibrationMax.v2);
 
-  // Serial.print("magX min ");Serial.println(m_magneticsCalibrationMin.v0);
-  // Serial.print("magY min ");Serial.println(m_magneticsCalibrationMin.v1);
-  // Serial.print("magZ min ");Serial.println(m_magneticsCalibrationMin.v2);
+  // DEBUG_SERIAL.print("magX min ");DEBUG_SERIAL.println(m_magneticsCalibrationMin.v0);
+  // DEBUG_SERIAL.print("magY min ");DEBUG_SERIAL.println(m_magneticsCalibrationMin.v1);
+  // DEBUG_SERIAL.print("magZ min ");DEBUG_SERIAL.println(m_magneticsCalibrationMin.v2);
 
 }

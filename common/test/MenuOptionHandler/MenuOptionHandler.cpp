@@ -12,26 +12,26 @@ void MenuOptionHandler::start() {
 
   while (shouldContinue) {
 
-    Serial.println();
+    DEBUG_SERIAL.println();
 
     std::map<int, MenuOption*>::iterator itr; 
     for (itr = std::next(optionsMap.begin()); itr != optionsMap.end(); ++itr) { 
-      Serial.print(itr->first);Serial.print(". ");
+      DEBUG_SERIAL.print(itr->first);DEBUG_SERIAL.print(". ");
       itr->second->printMessage(); 
     }
 
-    Serial.print(0);Serial.print(". ");
+    DEBUG_SERIAL.print(0);DEBUG_SERIAL.print(". ");
     optionsMap[0]->printMessage(); 
 
-    Serial.println();
+    DEBUG_SERIAL.println();
 
-    while(!Serial.available()) {};
+    while(!DEBUG_SERIAL.available()) {};
     
-    int asciiToNumberSelectionInput = Serial.read() - '0';
+    int asciiToNumberSelectionInput = DEBUG_SERIAL.read() - '0';
     if (optionsMap.find( asciiToNumberSelectionInput ) != optionsMap.end()) {
       optionsMap[asciiToNumberSelectionInput]->callback();
     } else {
-      Serial.println("no option by that value available");
+      DEBUG_SERIAL.println("no option by that value available");
     }
   };
 }

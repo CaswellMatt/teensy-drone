@@ -28,20 +28,20 @@ MARGCalibrationHandler::MARGCalibrationHandler() :
 
 
 void MARGCalibrationHandler::checkMaxAndMinAndSet(float32_t input, float32_t& max, float32_t& min) {
-  Serial.println(input);
+  DEBUG_SERIAL.println(input);
   if (input > max) max = input;
   if (input < min) min = input;
 };
 
 void MARGCalibrationHandler::checkMaxAndMinAndSetForOneValue(float32_t input, float32_t& maxOrMin) {
-  Serial.println(input);
+  DEBUG_SERIAL.println(input);
   if (input > maxOrMin) maxOrMin = input;
   if (input < maxOrMin) maxOrMin = input;
 };
 
 
 void MARGCalibrationHandler::printTitle() {
-  Serial.println("MARG Calibration Menu");
+  DEBUG_SERIAL.println("MARG Calibration Menu");
 }
 
 
@@ -52,7 +52,7 @@ void MARGCalibrationHandler::setup() {
 
   auto magneticsCalibrator = [this](){ calibrate(mpu.mag_data, MAG_START);  };
   addOption(MAGNETICS_INDEX, magneticsCalibrator, magneticsOptionText);
-  
+
   auto printerAllValues = [this](){ printTestValues();  };
   addOption(PRINT_TEST_INDEX, printerAllValues, printTestOptionText);
 
@@ -70,20 +70,20 @@ void MARGCalibrationHandler::setup() {
 
   uint8_t wai = mpu.whoami();
   if (wai == 0x71){
-    Serial.println("Successful connection");
+    DEBUG_SERIAL.println("Successful connection");
   }
   else{
-    Serial.print("Failed connection: ");
-    Serial.println(wai, HEX);
+    DEBUG_SERIAL.print("Failed connection: ");
+    DEBUG_SERIAL.println(wai, HEX);
   }
 
   uint8_t wai_AK8963 = mpu.AK8963_whoami();
   if (wai_AK8963 == 0x48){
-    Serial.println("Successful connection to mag");
+    DEBUG_SERIAL.println("Successful connection to mag");
   }
   else{
-    Serial.print("Failed connection to mag: ");
-    Serial.println(wai_AK8963, HEX);
+    DEBUG_SERIAL.print("Failed connection to mag: ");
+    DEBUG_SERIAL.println(wai_AK8963, HEX);
   }
   mpu.calib_acc();
 
@@ -95,24 +95,24 @@ void MARGCalibrationHandler::calibrateAcceleration() {
 
   auto runCalibrationAndIncrementEeprom = [&](int accelIndex, String printString) {
     delay(1000);
-    Serial.println(printString);
+    DEBUG_SERIAL.println(printString);
     delay(3000);
     calibrateOneValue(mpu.accel_data[accelIndex], eepromAddress);
 
     eepromAddress+=sizeof(float32_t);
   };
 
-  Serial.println("calibrate x...");
+  DEBUG_SERIAL.println("calibrate x...");
 
-  runCalibrationAndIncrementEeprom(0, "roll right side down");
-  runCalibrationAndIncrementEeprom(0, "roll right side up");
+  runCalibrationAndIncrementEeprom(0, "pitch nose up");
+  runCalibrationAndIncrementEeprom(0, "pitch nose down");
 
-  Serial.println("calibrate y...");
-
-  runCalibrationAndIncrementEeprom(1, "pitch nose up");
-  runCalibrationAndIncrementEeprom(1, "pitch nose down");
+  DEBUG_SERIAL.println("calibrate y...");
+    
+  runCalibrationAndIncrementEeprom(1, "roll right side down");
+  runCalibrationAndIncrementEeprom(1, "roll right side up");
   
-  Serial.println("calibrate z...");
+  DEBUG_SERIAL.println("calibrate z...");
 
   runCalibrationAndIncrementEeprom(2, "turn top to face down");
   runCalibrationAndIncrementEeprom(2, "turn back upright");
@@ -121,7 +121,7 @@ void MARGCalibrationHandler::calibrateAcceleration() {
 
 void MARGCalibrationHandler::calibrateOneValue(float& data, int eepromStartAddress) {
 
-  Serial.println("started calibration");
+  DEBUG_SERIAL.println("started calibration");
 
   float32_t minOrMax = 0;
  
@@ -131,7 +131,7 @@ void MARGCalibrationHandler::calibrateOneValue(float& data, int eepromStartAddre
 
   for (int j = 0; j < 10; ++j) {
 
-    Serial.println(j);
+    DEBUG_SERIAL.println(j);
 
     for (int i = 0; i < count; ++i) {
       mpu.read_all();
@@ -153,9 +153,9 @@ void MARGCalibrationHandler::calibrateOneValue(float& data, int eepromStartAddre
 
   EEPROM.put(eeAddress, minOrMax);
 
-  Serial.print("value ");Serial.println(minOrMax);
+  DEBUG_SERIAL.print("value ");DEBUG_SERIAL.println(minOrMax);
 
-  Serial.println("done");
+  DEBUG_SERIAL.println("done");
 
 }
 
@@ -163,7 +163,7 @@ void MARGCalibrationHandler::readCalibrationValues() {
   float32_t valueToPrint = 0;
   for (int i = 0; i < 12; ++i) {
     EEPROM.get(i * sizeof(float32_t), valueToPrint);
-    Serial.println(valueToPrint);
+    DEBUG_SERIAL.println(valueToPrint);
   }
 }
 
@@ -171,7 +171,7 @@ void MARGCalibrationHandler::readCalibrationValues() {
 
 void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress) {
 
-  Serial.println("started calibration");
+  DEBUG_SERIAL.println("started calibration");
 
   float32_t xMin = 0;
   float32_t yMin = 0; 
@@ -189,7 +189,7 @@ void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress)
 
   for (int j = 0; j < 180; ++j) {
 
-    Serial.println(j);
+    DEBUG_SERIAL.println(j);
 
     for (int i = 0; i < count; ++i) {
       mpu.read_all();
@@ -236,33 +236,37 @@ void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress)
   EEPROM.put(eeAddress, zMax);
   
 
-  Serial.print("x max ");Serial.println(xMax);
-  Serial.print("y max ");Serial.println(yMax);
-  Serial.print("z max ");Serial.println(zMax);
+  DEBUG_SERIAL.print("x max ");DEBUG_SERIAL.println(xMax);
+  DEBUG_SERIAL.print("y max ");DEBUG_SERIAL.println(yMax);
+  DEBUG_SERIAL.print("z max ");DEBUG_SERIAL.println(zMax);
 
-  Serial.print("x min ");Serial.println(xMin);
-  Serial.print("y min ");Serial.println(yMin);
-  Serial.print("z min ");Serial.println(zMin);
+  DEBUG_SERIAL.print("x min ");DEBUG_SERIAL.println(xMin);
+  DEBUG_SERIAL.print("y min ");DEBUG_SERIAL.println(yMin);
+  DEBUG_SERIAL.print("z min ");DEBUG_SERIAL.println(zMin);
 
-  Serial.println(eeAddress);
+  DEBUG_SERIAL.println(eeAddress);
 
-  Serial.println("done");
+  DEBUG_SERIAL.println("done");
 
 }
 
 
 void MARGCalibrationHandler::printTestValues() {
 
-  Serial.println("readings");
+  DEBUG_SERIAL.println("readings");
   for (int i = 0; i < 10000; ++i) {
     mpu.read_all();
-    Serial.print(mpu.accel_data[0], 6);Serial.print(" ");
-    Serial.print(mpu.accel_data[1], 6);Serial.print(" ");
-    Serial.print(mpu.accel_data[2], 6);Serial.print("  ");
-    // Serial.print(mpu.mag_data[0], 6);Serial.print(" ");
-    // Serial.print(mpu.mag_data[1], 6);Serial.print(" ");
-    // Serial.print(mpu.mag_data[2], 6);Serial.print(" ");
-    Serial.println();
+    DEBUG_SERIAL.print(" accel x ");DEBUG_SERIAL.print(mpu.accel_data[0], 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" accel y ");DEBUG_SERIAL.print(mpu.accel_data[1], 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" accel z ");DEBUG_SERIAL.print(mpu.accel_data[2], 6);DEBUG_SERIAL.print("       ");
+    DEBUG_SERIAL.print(" mag x ");DEBUG_SERIAL.print(mpu.mag_data[0], 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" mag y ");DEBUG_SERIAL.print(mpu.mag_data[1], 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" mag z ");DEBUG_SERIAL.print(mpu.mag_data[2], 6);DEBUG_SERIAL.print("       ");
+    DEBUG_SERIAL.print(" gyro x ");DEBUG_SERIAL.print(mpu.gyro_data[0], 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" gyro y ");DEBUG_SERIAL.print(mpu.gyro_data[1], 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" gyro z ");DEBUG_SERIAL.print(mpu.gyro_data[2], 6);DEBUG_SERIAL.print(" ");
+
+    DEBUG_SERIAL.println();
   
     delay(2);
   }
@@ -310,7 +314,7 @@ void MARGCalibrationHandler::writeManualValuesToCalibration() {
   eeAddress += sizeof(float32_t);
   EEPROM.put(eeAddress, 60.087891);
 
-  Serial.println("manual values written");
+  DEBUG_SERIAL.println("manual values written");
 
 
 }

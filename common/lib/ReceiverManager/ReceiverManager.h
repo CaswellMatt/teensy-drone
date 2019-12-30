@@ -13,8 +13,9 @@ namespace ReceiverManager
   #define PITCH_PIN 3
   #define THROTTLE_PIN 4
   #define YAW_PIN 5
-  #define TOP_RIGHT_SWITCH 6
-  #define TOP_LEFT_SWITCH 7
+  #define TOP_LEFT_SWITCH 6
+  #define TOP_RIGHT_SWITCH 7
+
   
   ReceiverPulseTimer rollInput(ROLL_PIN);
   ReceiverPulseTimer pitchInput(PITCH_PIN);
@@ -27,8 +28,6 @@ namespace ReceiverManager
   ReceiverAligner* pitchAligned;
   ReceiverAligner* throttleAligned;
   ReceiverAligner* yawAligned;
-  ReceiverAligner* topLeftSwitchAligned;
-  ReceiverAligner* topRightSwitchAligned;
 
   void rollInputInterrupt() {
     rollInput.onPulseStateChange();
@@ -102,30 +101,19 @@ namespace ReceiverManager
 
     updateMinAndMaxForTimer(min, max, mid, YAW_START);
     yawAligned  = new ReceiverAligner(&yawInput, min, max, mid);
-
-    updateMinAndMaxForTimer(min, max, mid, TOP_LEFT_SWITCH_START);
-    topLeftSwitchAligned  = new ReceiverAligner(&topLeftSwitchInput, min, max, mid);
-
-    updateMinAndMaxForTimer(min, max, mid, TOP_RIGHT_SWITCH_START);
-    topRightSwitchAligned  = new ReceiverAligner(&topRightSwitchInput, min, max, mid);
     
-    updateMinAndMaxForTimer(min, max, mid, LAST_CHANNEL_START);
-    lastChannelAligned  = new ReceiverAligner(&lastChannelInput, min, max, mid);
   }
 
    void destroyAligners() {
     delete rollAligned;
     delete pitchAligned;
     delete throttleAligned;
-    delete yawAligned;
-    delete topLeftSwitchAligned;
-    delete topRightSwitchAligned;
-    delete lastChannelAligned;
+    delete yawAligned;;
   }
 
   void printPulseLength(String channel, int pulseLength) {
-    Serial.print(channel);Serial.print(" ");
-    Serial.print(pulseLength);Serial.print(" ");
+    DEBUG_SERIAL.print(channel);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(pulseLength);DEBUG_SERIAL.print(" ");
   }
 
   void printAllPulseLengths() {
@@ -133,9 +121,8 @@ namespace ReceiverManager
     printPulseLength("pitch",          pitchInput.getPulseLength());
     printPulseLength("throttle",       throttleInput.getPulseLength());
     printPulseLength("yaw",            yawInput.getPulseLength());
-    printPulseLength("top left dial",  topLeftSwitchInput.getPulseLength());
-    printPulseLength("top right dial", topRightSwitchInput.getPulseLength());
-    printPulseLength("last channel",   lastChannelInput.getPulseLength());
+    printPulseLength("top left switch",  topLeftSwitchInput.getPulseLength());
+    printPulseLength("top right switch", topRightSwitchInput.getPulseLength());
   }
 
   void printAlignedPulses() 
@@ -144,9 +131,6 @@ namespace ReceiverManager
     printPulseLength("pitch",          pitchAligned->getPulseLength());
     printPulseLength("throttle",       throttleAligned->getPulseLength());
     printPulseLength("yaw",            yawAligned->getPulseLength());
-    printPulseLength("top left dial",  topLeftSwitchAligned->getPulseLength());
-    printPulseLength("top right dial", topRightSwitchAligned->getPulseLength());
-    printPulseLength("last channel",   lastChannelAligned->getPulseLength());
   }
 
 }

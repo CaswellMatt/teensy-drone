@@ -51,7 +51,7 @@ public:
     }
 
     float32_t currentOutput = sumOfXAndB - sumOfYAndA;
-    // Serial.print(" sumOfXAndB "); Serial.print(sumOfXAndB); Serial.print(" sumOfYAndA "); Serial.println(sumOfYAndA);
+    // DEBUG_SERIAL.print(" sumOfXAndB "); DEBUG_SERIAL.print(sumOfXAndB); DEBUG_SERIAL.print(" sumOfYAndA "); DEBUG_SERIAL.println(sumOfYAndA);
     
     // m_filterInputsX->printIndex();
 

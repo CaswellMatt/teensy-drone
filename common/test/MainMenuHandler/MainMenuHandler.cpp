@@ -1,12 +1,12 @@
 #include "MainMenuHandler.h"
 
 void MainMenuHandler::setup() {
-  Serial.begin(1);
-  Serial.flush();
+  DEBUG_SERIAL.begin(1);
+  DEBUG_SERIAL.flush();
   
   std::map<int,MenuOptionHandler*>::iterator itr; 
   for (itr = handlerMap.begin(); itr != handlerMap.end(); ++itr) { 
-    Serial.println(itr->first);
+    DEBUG_SERIAL.println(itr->first);
     itr->second->setup();
   }
 }
@@ -16,32 +16,32 @@ void MainMenuHandler::start() {
   bool shouldKeepMenuUp = true;
   while (shouldKeepMenuUp) {
     
-    Serial.println("Main Menu");
-    Serial.println();
+    DEBUG_SERIAL.println("Main Menu");
+    DEBUG_SERIAL.println();
 
     std::map<int,MenuOptionHandler*>::iterator itr; 
     for (itr = handlerMap.begin(); itr != handlerMap.end(); ++itr) { 
-      Serial.print(itr->first);Serial.print(". ");
+      DEBUG_SERIAL.print(itr->first);DEBUG_SERIAL.print(". ");
       itr->second->printMessage(); 
     }
 
-    Serial.println("0. exit");
-    Serial.println();
+    DEBUG_SERIAL.println("0. exit");
+    DEBUG_SERIAL.println();
 
     
-    while (!Serial.available()) {};
-    int asciiToNumberSelectionInput = Serial.read() - '0';
+    while (!DEBUG_SERIAL.available()) {};
+    int asciiToNumberSelectionInput = DEBUG_SERIAL.read() - '0';
 
     if (handlerMap.find( asciiToNumberSelectionInput ) != handlerMap.end()) {
       handlerMap[asciiToNumberSelectionInput]->start();
     } else if (asciiToNumberSelectionInput == EXIT_INDEX) {
       shouldKeepMenuUp = false;
     } else {
-      Serial.println("no option selected");
+      DEBUG_SERIAL.println("no option selected");
     }
   };
   
-  Serial.println("Finished");
+  DEBUG_SERIAL.println("Finished");
   while(1) {};
 }
 

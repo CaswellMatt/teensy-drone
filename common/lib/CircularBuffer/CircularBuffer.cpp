@@ -46,7 +46,7 @@ bool CircularBuffer::hasFilled() {
 }
 
 void CircularBuffer::printIndex() {
-  Serial.println(m_currentIndex);
+  DEBUG_SERIAL.println(m_currentIndex);
 }
 
 void CircularBuffer::testBuffer() {
@@ -55,11 +55,11 @@ void CircularBuffer::testBuffer() {
     buffer.add(i);
   }
 
-  Serial.println();
+  DEBUG_SERIAL.println();
 
   for (int i = 1; i < 100; ++i)
   {
-    Serial.println(buffer.get(-i + 1));
+    DEBUG_SERIAL.println(buffer.get(-i + 1));
   }
 
   delay(20000);

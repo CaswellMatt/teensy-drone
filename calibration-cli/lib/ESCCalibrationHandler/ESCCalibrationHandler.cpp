@@ -16,12 +16,12 @@ const String calibrateAllESCsOptionTest = "Calibrate ESC's";
 
 
 ESCCalibrationHandler::ESCCalibrationHandler() {
-    message = String("Calibrate ESC's");
+  message = String("Calibrate ESC's");
 }
 
 
 void ESCCalibrationHandler::printTitle() {
-  Serial.println("ESC Calibration Menu");
+  DEBUG_SERIAL.println("ESC Calibration Menu");
 }
 
 
@@ -50,12 +50,14 @@ void ESCCalibrationHandler::calibrate() {
     MotorControlManager::backLeft.trigger(pulseTime);
     MotorControlManager::backRight.trigger(pulseTime);
     
-    Serial.println(pulseTime);
+    DEBUG_SERIAL.println(pulseTime);
   }
 
   pulseTime = throttleMapStart;
 
   for (int i = 0; i < 5000; i++) {
+    DEBUG_SERIAL.println(pulseTime);
+
     while (micros() - timer < LOOPTIME_US);
     timer = micros();
 
@@ -63,8 +65,6 @@ void ESCCalibrationHandler::calibrate() {
     MotorControlManager::frontRight.trigger(pulseTime);
     MotorControlManager::backLeft.trigger(pulseTime);
     MotorControlManager::backRight.trigger(pulseTime);
-
-    Serial.println(pulseTime);
   }
 
   delay(6000);

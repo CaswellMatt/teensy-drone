@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "arm_math.h"
+#include "Constants.h"
 
 class CircularBuffer {
 private:

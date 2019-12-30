@@ -28,7 +28,12 @@ Drone::~Drone() {
 }
 
 void Drone::setup() {
-  Serial.begin(1);
+  #ifdef BLUETOOTH
+    DEBUG_SERIAL.begin(230400);
+  #else 
+    DEBUG_SERIAL.begin(1);
+  #endif
+
   // #define DEBUG
   #ifdef DEBUG
     while(!Serial);
@@ -39,7 +44,7 @@ void Drone::setup() {
 
   while(!ReceiverManager::isReceiving()) {
     delay(1000);
-    // Serial.println(ReceiverManager::isReceiving());
+    // DEBUG_SERIAL.println(ReceiverManager::isReceiving());
   };
 
   MotorControlManager::setup();
@@ -48,6 +53,7 @@ void Drone::setup() {
 
 bool Drone::motorsAreActive() {
   static bool isActive = false;
+  static bool yawTriggerTripped = false;
 
   float32_t lowerThrottleThreshold = throttleMapStart +  0.05 * (throttleMapEnd - throttleMapStart);
 
@@ -56,28 +62,55 @@ bool Drone::motorsAreActive() {
                                                     throttleMapMiddle, 
                                                     throttleMapEnd) < lowerThrottleThreshold;
 
-  if (throttleLowerThanThreshold) {
-    
-    float32_t lowerYawThreshold = 
-      angularRateForControlRadiansStart +  0.04 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
+  static const int midpointForReceiverPulse = 1500;
 
-    float32_t upperYawThreshold = 
-      angularRateForControlRadiansStart +  0.96 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
+  bool armMotorsSwitchIsOn = ReceiverManager::topLeftSwitchInput.getPulseLength() > midpointForReceiverPulse;
 
-    float32_t currentYawPulse = ReceiverManager::yawAligned->getPulseLength(angularRateForControlRadiansStart, 
-                                                                            angularRateForControlRadiansMiddle, 
-                                                                            angularRateForControlRadiansEnd);
+  if (armMotorsSwitchIsOn) {
+    if (throttleLowerThanThreshold) {
+      
+      float32_t lowerYawThreshold = 
+        angularRateForControlRadiansStart +  0.04 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-    bool yawLowerThanThreshold = currentYawPulse <= lowerYawThreshold;
-    bool yawAboveThreshold = currentYawPulse >= upperYawThreshold;
-    if (yawLowerThanThreshold) {
-      isActive = true;
-    } else if (yawAboveThreshold) {
-      isActive = false;
+      float32_t middleYawThreshold = 
+        angularRateForControlRadiansStart +  0.50 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
+
+      float32_t upperYawThreshold = 
+        angularRateForControlRadiansStart +  0.96 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
+
+      float32_t currentYawPulse = ReceiverManager::yawAligned->getPulseLength(angularRateForControlRadiansStart, 
+                                                                              angularRateForControlRadiansMiddle, 
+                                                                              angularRateForControlRadiansEnd);
+
+      bool yawLowerThanThreshold = currentYawPulse <= lowerYawThreshold;
+      bool yawAboveThreshold = currentYawPulse >= upperYawThreshold;
+      if (yawLowerThanThreshold) {
+        yawTriggerTripped = true;
+      } else if (yawAboveThreshold) {
+        isActive = false;
+      }
+
+
+      if (yawTriggerTripped) {
+        float32_t differenceBetweenYawAndCentrePulse = currentYawPulse - middleYawThreshold;
+        float32_t absoluteDifferenceBetweenYawAndCentrePulse;
+        arm_abs_f32(
+          &differenceBetweenYawAndCentrePulse, 
+          &absoluteDifferenceBetweenYawAndCentrePulse, 
+          1);
+        DEBUG_SERIAL.println("here");
+        static const float32_t thresholdForComparison = 0.1;
+        if (absoluteDifferenceBetweenYawAndCentrePulse < thresholdForComparison) {
+          isActive = true;
+          yawTriggerTripped = false;
+        } 
+      }
+                                                    
     }
-                                                  
+  } else {
+    isActive = false;
   }
-
+  
   return isActive;
 }
 
@@ -101,6 +134,9 @@ void Drone::start() {
   while(1) {
 
     m_orientationFilter.update(LOOPTIME_S);
+
+    // static long printTimer = micros();
+      
     if (motorsAreActive()) {
 
       auto pulseToControlSetpoint = [&](ReceiverAligner* aligner) {
@@ -114,10 +150,21 @@ void Drone::start() {
       float32_t pitchControlInput = pulseToControlSetpoint(ReceiverManager::pitchAligned);
       float32_t yawControlInput   = pulseToControlSetpoint(ReceiverManager::yawAligned);
 
-      float32_t rollRatePositiveRightSideDown =  m_marg.getRotationalRates().v1;
-      //TODO: double check pitch
-      float32_t pitchRatePositiveNoseDown     = -m_marg.getRotationalRates().v0;
-      float32_t yawRatePositiveNoseLeft       =  -m_marg.getRotationalRates().v2;
+      float32_t rollRatePositiveRightSideDown = m_marg.getRotationalRates().v0;
+      float32_t pitchRatePositiveNoseDown     = m_marg.getRotationalRates().v1;
+      float32_t yawRatePositiveNoseLeft       = m_marg.getRotationalRates().v2;
+
+
+      // if (micros() - printTimer > 2000) {
+      //   printTimer = micros();
+      //   DEBUG_SERIAL.print("pitch "); DEBUG_SERIAL.print(m_orientationFilter.getPitch(),5); DEBUG_SERIAL.print(" ");
+      //   DEBUG_SERIAL.print("roll "); DEBUG_SERIAL.print(m_orientationFilter.getRoll(),5); DEBUG_SERIAL.print(" ");
+
+      //   DEBUG_SERIAL.print("x "); DEBUG_SERIAL.print(rollRatePositiveRightSideDown,5); DEBUG_SERIAL.print(" ");
+      //   DEBUG_SERIAL.print("y "); DEBUG_SERIAL.print(pitchRatePositiveNoseDown,5); DEBUG_SERIAL.print(" ");
+      //   DEBUG_SERIAL.print("z "); DEBUG_SERIAL.print(yawRatePositiveNoseLeft,5); DEBUG_SERIAL.print(" ");
+      //   DEBUG_SERIAL.println();
+      // }
 
       rollRotationalRateController.update(rollControlInput, rollRatePositiveRightSideDown);
       pitchRotationalRateController.update(pitchControlInput, pitchRatePositiveNoseDown);
@@ -126,26 +173,17 @@ void Drone::start() {
       rollAngleController.update(0, m_orientationFilter.getRoll());
       pitchAngleController.update(0, m_orientationFilter.getPitch());
 
-      // static long printTimer = micros();
-
-      // if (micros() - printTimer > 2000) {
-      //   printTimer = micros();
-      //   Serial.print("pitch "); Serial.print(m_orientationFilter.getPitch(),5); Serial.print(" ");
-      //   Serial.print("roll "); Serial.print(m_orientationFilter.getRoll(),5); Serial.print(" ");
-      //   Serial.println();
-      // }
-
       float32_t rollOutputPID  = rollRotationalRateController.getOutput() + rollAngleController.getOutput();
       float32_t pitchOutputPID = pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
       float32_t yawOutputPID   = yawRotationalRateController.getOutput();
 
       float32_t throttlePulse = 
-        ReceiverManager::throttleAligned->getPulseLength(throttleMapStart, throttleMapMiddle, throttleMapEnd);
+        ReceiverManager::throttleAligned->getPulseLength(throttleMapStart + 3, throttleMapMiddle, throttleMapEnd);
 
-      frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID - yawOutputPID;
-      frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID + yawOutputPID;
-      backLeftPulse   = throttlePulse + rollOutputPID + pitchOutputPID + yawOutputPID;
-      backRightPulse  = throttlePulse - rollOutputPID + pitchOutputPID - yawOutputPID;
+      frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID + yawOutputPID;
+      frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID - yawOutputPID;
+      backLeftPulse   = throttlePulse + rollOutputPID + pitchOutputPID - yawOutputPID;
+      backRightPulse  = throttlePulse - rollOutputPID + pitchOutputPID + yawOutputPID;
 
       auto checkMinMaxOfPulse = [](float32_t& pulse) {
         float32_t min = throttleMapStart;
@@ -175,14 +213,15 @@ void Drone::start() {
       backLeftPulse   = throttleMapStart;
       backRightPulse  = throttleMapStart;
     }
-
+    
     while(micros() - m_timer < LOOPTIME_US);
     m_timer = micros();
-
+    noInterrupts();
     MotorControlManager::frontLeft.trigger(frontLeftPulse);
     MotorControlManager::frontRight.trigger(frontRightPulse);
     MotorControlManager::backLeft.trigger(backLeftPulse);
     MotorControlManager::backRight.trigger(backRightPulse);
+    interrupts();
   }
 
 }

@@ -1,6 +1,13 @@
 #ifndef CONSTANTS
 #define CONSTANTS
 
+// #define BLUETOOTH
+#ifdef BLUETOOTH
+#define DEBUG_SERIAL Serial1
+#else
+#define DEBUG_SERIAL Serial
+#endif
+
 #include "arm_math.h"
 
 const long LOOPTIME_US = 1000;

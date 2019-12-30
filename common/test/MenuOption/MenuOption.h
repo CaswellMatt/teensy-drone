@@ -2,6 +2,7 @@
 #define MENU_OPTION
 #include <Arduino.h>
 #include <functional>
+#include "Constants.h"
 class MenuOption {
 public:
   MenuOption(
@@ -17,7 +18,7 @@ public:
   const String message;
   
   void printMessage() {
-    Serial.println(message);
+    DEBUG_SERIAL.println(message);
   }
 };
 

@@ -31,7 +31,7 @@ class OrientationFilter {
 
     Quaternion calculateComplementaryQuaternion(Quaternion q, float32_t gainFactor);
     
-    float32_t rotateAxisAndReturnAngleFromHorizontal(Vector& vector, float32_t angleOffset);
+    float32_t rotateAxisAndReturnAngleFromHorizontal(Vector& vector);
 
     void debugPrint();
 

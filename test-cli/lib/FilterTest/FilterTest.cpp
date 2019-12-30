@@ -17,7 +17,7 @@ void FilterTest::setup() {
 } 
 
 void FilterTest::printTitle() {
-  Serial.println("Filter Test");
+  DEBUG_SERIAL.println("Filter Test");
 }
 
 void FilterTest::runFilter() {
@@ -545,9 +545,9 @@ void FilterTest::runFilter() {
     dataOut[i] = filter.get();
   }
 
-  Serial.println("input output");
+  DEBUG_SERIAL.println("input output");
   for (int i = 0; i < dataSize; ++i) {
-    Serial.print(data[i]); Serial.print(" "); Serial.println(dataOut[i]);
+    DEBUG_SERIAL.print(data[i]); DEBUG_SERIAL.print(" "); DEBUG_SERIAL.println(dataOut[i]);
   }
 
 }

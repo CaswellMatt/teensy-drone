@@ -12,7 +12,7 @@ private:
 public:
 
   void printMessage() {
-    Serial.println(message);
+    DEBUG_SERIAL.println(message);
   }
 
   virtual void printTitle() = 0;
