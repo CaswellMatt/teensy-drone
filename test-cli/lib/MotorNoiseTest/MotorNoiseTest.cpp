@@ -55,7 +55,7 @@ void MotorNoiseTest::setup() {
   };
   addOption(ALL_MOTORS_TEST, runAllMotorsFunctionCall, AllMotorsTestString);
 
-  marg = new MARG();
+  m_marg = new MARG();
 
   timer = micros();
 }
@@ -103,12 +103,12 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
       (*(motorArray + i)).trigger(backLeftPulse);
     }
 
-    marg->read();
+    m_marg->read();
     if (backLeftPulse >= signalSetPoint && iterationCount > 6000) {
       // buffer[bufferIndex] = sin(2 * PI * 20 * (bufferIndex/2) / fftSize); // frequence peak at 20hz for checking fft
-      bufferX[bufferIndex] = (marg->*sensor)().v0;
-      bufferY[bufferIndex] = (marg->*sensor)().v1;
-      bufferZ[bufferIndex] = (marg->*sensor)().v2;
+      bufferX[bufferIndex] = (m_marg->*sensor)().v0;
+      bufferY[bufferIndex] = (m_marg->*sensor)().v1;
+      bufferZ[bufferIndex] = (m_marg->*sensor)().v2;
       
       bufferX[bufferIndex + 1] = 0;
       bufferY[bufferIndex + 1] = 0;

@@ -28,6 +28,7 @@ void OrientationFilter::update(float32_t deltaT) {
 
   float32_t error = abs(m_marg->getAcceleration().magnitude() - G) / G;
 
+  // gain factor is linear between two bounds and reaches a minimum at the upper bound, otherwise constant
   auto gainFactor = [](float32_t error, float32_t lowerBound, float32_t upperBound) -> float32_t {
     if (error < lowerBound) {
       return error;
@@ -70,7 +71,7 @@ void OrientationFilter::update(float32_t deltaT) {
   ).asUnit();
 
   bool magneticHasChanged = m_magneticsPrevious != m_marg->getMagnetics();
-  static const bool USE_MAG = true;
+  static const bool USE_MAG = false;
   if (magneticHasChanged && USE_MAG) {
 
     float32_t error = abs(m_marg->getMagnetics().magnitude() - 1);
@@ -95,15 +96,13 @@ void OrientationFilter::update(float32_t deltaT) {
   }
 
   m_magneticsPrevious = m_marg->getMagnetics();
-
-  m_orientation.multiply(rotationalOffset);
   
-  debugPrint();
+  // debugPrint();
 }
 
 float32_t OrientationFilter::rotateAxisAndReturnAngleFromHorizontal(Vector& vector) {
   //conjugate of orientatation is used as it is the rotation to go back to relative position
-  Vector axisRelativeToDrone = m_orientation.conjugate().rotate(vector);
+  Vector axisRelativeToDrone = m_orientation.multiply(rotationalOffset).conjugate().rotate(vector);
   
   float32_t xSquaredPlusYSquared = 
     axisRelativeToDrone.v0 * axisRelativeToDrone.v0 + 
@@ -231,7 +230,7 @@ Quaternion OrientationFilter::calculateComplementaryQuaternion(Quaternion q, flo
 void OrientationFilter::debugPrint() {
   static long printTimer = micros();
 
-  if (micros() - printTimer > 100000) {
+  if (micros() - printTimer > 32000) {
     printTimer = micros();
 
   // DEBUG_SERIAL.print(gain);;DEBUG_SERIAL.print(" ");

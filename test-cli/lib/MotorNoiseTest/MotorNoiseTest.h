@@ -14,13 +14,13 @@
 class MotorNoiseTest : public MenuOptionHandler {
 private:
     long timer;
-    MARG* marg;
+    MARG* m_marg;
 
 public:
 
   MotorNoiseTest();
   ~MotorNoiseTest() {
-    delete marg;
+    delete m_marg;
   }
 
   virtual void setup() override;
