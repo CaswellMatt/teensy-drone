@@ -19,9 +19,9 @@ PIDController::PIDController(
 
 void PIDController::update(float32_t setPoint, float32_t actual) {
   float32_t error = setPoint - actual;
-  float32_t proportional = error * m_proportionalConstant;
+  m_proportional = error * m_proportionalConstant;
   m_currentIntegral += m_integralConstant * error;
-  float32_t derivative = m_derivativeConstant * (error - m_previousError);
+  m_derivative = m_derivativeConstant * (error - m_previousError);
 
   m_previousError = error;
   
@@ -37,7 +37,7 @@ void PIDController::update(float32_t setPoint, float32_t actual) {
 
   checkAndLimitValue(m_currentIntegral, m_integralLimit);
   
-  m_output = proportional + m_currentIntegral + derivative;
+  m_output = m_proportional + m_currentIntegral + m_derivative;
   checkAndLimitValue(m_output, m_outputLimit);
 
 }
@@ -46,6 +46,8 @@ void PIDController::reset()
 {
   m_previousError   = 0;
   m_currentIntegral = 0;
+  m_proportional = 0;
+  m_derivative = 0;
 }
 
 float32_t PIDController::getOutput() {

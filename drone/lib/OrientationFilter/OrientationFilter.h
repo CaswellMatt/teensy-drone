@@ -15,7 +15,7 @@ class OrientationFilter {
     float32_t getRoll();
     float32_t getPitch();
     float32_t getYaw();
-
+    
   private:
     MARG* m_marg;
     Quaternion m_orientation;
@@ -30,8 +30,6 @@ class OrientationFilter {
     Quaternion sphericalInterpolation(Quaternion q, float32_t alpha);
 
     Quaternion calculateComplementaryQuaternion(Quaternion q, float32_t gainFactor);
-    
-    float32_t rotateAxisAndReturnAngleFromHorizontal(Vector& vector);
 
     void debugPrint();
 

@@ -17,6 +17,9 @@ public:
   
   float32_t getOutput();
 
+  float32_t getDerivative() { return m_derivative; }
+  float32_t getProportional() { return m_proportional; }
+
 private:
   const float32_t m_proportionalConstant;
   const float32_t m_integralConstant;
@@ -24,6 +27,9 @@ private:
 
   float32_t m_currentIntegral;
   float32_t m_previousError;
+
+  float32_t m_derivative;
+  float32_t m_proportional;
 
   const float32_t m_outputLimit;
   const float32_t m_integralLimit;

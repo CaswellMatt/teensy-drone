@@ -9,17 +9,6 @@
 #define SS_PIN   10 
 
 namespace {
-  //right wing down for positive roll
-  //nose down for positive pitch
-  //nose right for positive roll
-
-  //pitch acts through xz plane around y
-  //roll acts through yz plane around x
-  //yaw acts through xy plane around z
-
-  //x axis is positive from back to nose
-  //y axis is positive from right to left
-  //z axis is positive from top to bottom
 
   const int xAxisIndex = 0;
   const int yAxisIndex = 1;
@@ -30,12 +19,16 @@ namespace {
   const int yawAxisIndex = 2;
 
   const int direction = 1;
-  const int gyroXDirection = -direction;
-  const int gyroYDirection = -direction;
+
+  //roll positive right wing down
+  //pitch positive nose down 
+  //yaw positive nose left
+  const int gyroXDirection = direction;
+  const int gyroYDirection = direction;
   const int gyroZDirection = direction;
 
   const int accelXDirection = direction;
-  const int accelYDirection = -direction;
+  const int accelYDirection = direction;
   const int accelZDirection = direction;
 
 }
@@ -122,6 +115,8 @@ void MARG::read() {
     
     m_accelerometerFilterZ.update(m_accelerationRaw.v2);
     m_acceleration.v2 = m_accelerometerFilterZ.get();
+  } else {
+    m_acceleration = m_accelerationRaw;
   }
 
   if (m_gyroSoftwareFiltersOn) {
@@ -133,6 +128,8 @@ void MARG::read() {
     
     m_gyroscopeFilterZ.update(m_rotationalRatesRaw.v2);
     m_rotationalRates.v2 = m_gyroscopeFilterZ.get();
+  } else {
+    m_rotationalRates = m_rotationalRatesRaw;
   }
   
   //TODO: can use data read interrupts to avoid reading mag data too often when not changed?

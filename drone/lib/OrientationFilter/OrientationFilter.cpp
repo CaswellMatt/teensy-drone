@@ -1,7 +1,7 @@
 #include "OrientationFilter.h"
 
 namespace {
-  Quaternion rotationalOffset = {0.12793, -0.01458, -0.00816, 0.98995};
+  Quaternion rotationalOffset = {1.0, 0.0, 0.0, 0.0};
 }
 
 OrientationFilter::OrientationFilter(MARG* marg) :
@@ -100,41 +100,37 @@ void OrientationFilter::update(float32_t deltaT) {
   // debugPrint();
 }
 
-float32_t OrientationFilter::rotateAxisAndReturnAngleFromHorizontal(Vector& vector) {
-  //conjugate of orientatation is used as it is the rotation to go back to relative position
-  Vector axisRelativeToDrone = m_orientation.multiply(rotationalOffset).conjugate().rotate(vector);
-  
-  float32_t xSquaredPlusYSquared = 
-    axisRelativeToDrone.v0 * axisRelativeToDrone.v0 + 
-    axisRelativeToDrone.v1 * axisRelativeToDrone.v1;
-  
-  float32_t xAndY;
-  arm_sqrt_f32(xSquaredPlusYSquared, &xAndY);
-  
-  float32_t angle = atan2(axisRelativeToDrone.v2, xAndY);
-  float32_t angleWithOffsetForMARGPositionOffsetOnBody = (angle);
-
-  return angleWithOffsetForMARGPositionOffsetOnBody;
-}
-
 float32_t OrientationFilter::getRoll() {
-  // const float32_t rollOffset = -0.11;
-  Vector yAxisPerpendicularToDroneBodyThatChangesWithRoll(0, 1, 0);
-  return rotateAxisAndReturnAngleFromHorizontal(
-    yAxisPerpendicularToDroneBodyThatChangesWithRoll);
+  // roll (x-axis rotation)
+  Quaternion q = this->m_orientation.multiply(rotationalOffset).conjugate();
+  float32_t sinr_cosp = 2 * (q.q0 * q.q1 + q.q2 * q.q3);
+  float32_t cosr_cosp = 1 - 2 * (q.q1 * q.q1 + q.q2 * q.q2);
+  float32_t roll = atan2(sinr_cosp, cosr_cosp);
+  return roll;
 }
 
 
 float32_t OrientationFilter::getPitch() {
-  // const float32_t pitchOffset = -0.03;
-  Vector xAxisParrelelWithDroneBodyThatChangesWithPitch(1, 0, 0);
-  return rotateAxisAndReturnAngleFromHorizontal(
-    xAxisParrelelWithDroneBodyThatChangesWithPitch);
+  // pitch (y-axis rotation)
+  Quaternion q = this->m_orientation.multiply(rotationalOffset).conjugate();
+  float32_t sinp = 2 * (q.q0 * q.q2 - q.q3 * q.q1);
+  
+  float32_t pitch;
+  if (abs(sinp) >= 1) {
+    pitch = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+  } else {
+    pitch = asin(sinp);    
+  }
+
+  return pitch;
 }
 
 
 float32_t OrientationFilter::getYaw() {
-  //TODO: no yaw estimate needed?
+  // yaw (z-axis rotation)
+  // double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+  // double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+  // angles.yaw = std::atan2(siny_cosp, cosy_cosp);
   return 0;
 }
 
@@ -258,7 +254,7 @@ void OrientationFilter::debugPrint() {
     DEBUG_SERIAL.print(m_orientation.q0, 5);DEBUG_SERIAL.print(" ");
     DEBUG_SERIAL.print(m_orientation.q1, 5);DEBUG_SERIAL.print(" ");
     DEBUG_SERIAL.print(m_orientation.q2, 5);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(m_orientation.q3, 5);
+    DEBUG_SERIAL.print(m_orientation.q3, 5);DEBUG_SERIAL.println();
 
     // DEBUG_SERIAL.print(m_marg->getRotationalRates().v0, 5);DEBUG_SERIAL.print(" ");
     // DEBUG_SERIAL.print(m_marg->getRotationalRates().v1, 5);DEBUG_SERIAL.print(" ");

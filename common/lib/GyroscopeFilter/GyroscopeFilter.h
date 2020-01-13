@@ -9,6 +9,9 @@ public:
   float32_t get();
   void update(float32_t input);
 
+  void updateLow(float32_t input);
+  float32_t getLow();
+
 private:
 
   float32_t* m_inputCoefficientsBNotchFilter90hz;
@@ -17,8 +20,14 @@ private:
   float32_t* m_inputCoefficientsBNotchFilter265hz;
   float32_t* m_outputCoefficientsANotchFilter265hz;
 
-  IIRFilter* m_ellipticalLowPassFilterNotchFilter90hz;
-  IIRFilter* m_ellipticalLowPassFilterNotchFilter265hz;
+  IIRFilter* m_ellipticalFilterNotchFilter90hz;
+  IIRFilter* m_ellipticalFilterNotchFilter265hz;
+
+  float32_t* m_inputCoefficientsBLowFilter90hz;
+  float32_t* m_outputCoefficientsALowFilter90hz;
+
+  IIRFilter* m_ellipticalFilterLowFilter90hz;
+
   
 };
 #endif

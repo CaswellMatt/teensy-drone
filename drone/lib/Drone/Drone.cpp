@@ -116,25 +116,48 @@ bool Drone::motorsAreActive() {
 }
 
 void Drone::start() {
-  const float32_t outputLimit = 50;
-  const float32_t integralLimit = 50;
+  DEBUG_SERIAL.println("started");
+  constexpr float32_t outputLimit = 75;
+  constexpr float32_t integralLimit = 75;
+  static_assert(outputLimit >= integralLimit, "cannot have and output limit for pid less than integral limit");
 
-  const float32_t Kp = 10;
-  const float32_t Ki = 0.00;
-  const float32_t Kd = 0.1;
+  constexpr float32_t Kp = 13;
+  constexpr float32_t Ki = 0.003;
+  constexpr float32_t Kd = 4;
   PIDController rollRotationalRateController(Kp, Ki, Kd, outputLimit, integralLimit);
-  PIDController pitchRotationalRateController(Kp * 2, Ki, Kd, outputLimit, integralLimit);
-  PIDController yawRotationalRateController(Kp * 2, Ki, Kd, outputLimit, integralLimit);
+  PIDController pitchRotationalRateController(Kp, Ki, Kd, outputLimit, integralLimit);
+  PIDController yawRotationalRateController(Kp, Ki, Kd, outputLimit, integralLimit);
 
-  const float32_t KpAngle = 30;
-  const float32_t KiAngle = 0.001;
-  const float32_t KdAngle = 1;
+  constexpr float32_t KpAngle = 50;
+  constexpr float32_t KiAngle = 0.005;
+  constexpr float32_t KdAngle = 300;
   PIDController rollAngleController(KpAngle, KiAngle, KdAngle, outputLimit, integralLimit);
   PIDController pitchAngleController(KpAngle, KiAngle, KdAngle, outputLimit, integralLimit);
   
   while(1) {
 
     m_orientationFilter.update(LOOPTIME_S);
+
+    static long printTimer = micros();
+    if (micros() - printTimer > 30000) {
+      printTimer = micros();
+
+      DEBUG_SERIAL.print(m_orientationFilter.getPitch(),5); DEBUG_SERIAL.print(" ");
+      DEBUG_SERIAL.print(m_orientationFilter.getRoll(),5); DEBUG_SERIAL.print(" ");
+
+      DEBUG_SERIAL.print(m_marg.getRotationalRates().v0,5); DEBUG_SERIAL.print(" ");
+      DEBUG_SERIAL.print(m_marg.getRotationalRates().v1,5); DEBUG_SERIAL.print(" ");
+      DEBUG_SERIAL.print(m_marg.getRotationalRates().v2,5); DEBUG_SERIAL.print(" ");
+
+      DEBUG_SERIAL.print(m_marg.getAcceleration().v0,5); DEBUG_SERIAL.print(" ");
+      DEBUG_SERIAL.print(m_marg.getAcceleration().v1,5); DEBUG_SERIAL.print(" ");
+      DEBUG_SERIAL.print(m_marg.getAcceleration().v2,5); DEBUG_SERIAL.print(" ");
+
+      // DEBUG_SERIAL.print(pitchAngleController.getDerivative(),5); DEBUG_SERIAL.print(" ");
+      // DEBUG_SERIAL.print(pitchAngleController.getProportional(),5); DEBUG_SERIAL.print(" ");
+
+      DEBUG_SERIAL.println();
+    }
 
     if (motorsAreActive()) {
 
@@ -152,23 +175,6 @@ void Drone::start() {
       float32_t rollRatePositiveRightSideDown = m_marg.getRotationalRates().v0;
       float32_t pitchRatePositiveNoseDown     = m_marg.getRotationalRates().v1;
       float32_t yawRatePositiveNoseLeft       = m_marg.getRotationalRates().v2;
-
-      static long printTimer = micros();
-      if (micros() - printTimer > 2000) {
-        printTimer = micros();
-        // DEBUG_SERIAL.print("pitch "); DEBUG_SERIAL.print(m_orientationFilter.getPitch(),5); DEBUG_SERIAL.print(" ");
-        // DEBUG_SERIAL.print("roll "); DEBUG_SERIAL.print(m_orientationFilter.getRoll(),5); DEBUG_SERIAL.print(" ");
-
-        DEBUG_SERIAL.print("x "); DEBUG_SERIAL.print(rollRatePositiveRightSideDown,5); DEBUG_SERIAL.print(" ");
-        DEBUG_SERIAL.print("y "); DEBUG_SERIAL.print(pitchRatePositiveNoseDown,5); DEBUG_SERIAL.print(" ");
-        DEBUG_SERIAL.print("z "); DEBUG_SERIAL.print(yawRatePositiveNoseLeft,5); DEBUG_SERIAL.print(" ");
-
-        DEBUG_SERIAL.print("x "); DEBUG_SERIAL.print(m_marg.getAcceleration().v0,5); DEBUG_SERIAL.print(" ");
-        DEBUG_SERIAL.print("y "); DEBUG_SERIAL.print(m_marg.getAcceleration().v1,5); DEBUG_SERIAL.print(" ");
-        DEBUG_SERIAL.print("z "); DEBUG_SERIAL.print(m_marg.getAcceleration().v2,5); DEBUG_SERIAL.print(" ");
-
-        DEBUG_SERIAL.println();
-      }
 
       rollRotationalRateController.update(rollControlInput, rollRatePositiveRightSideDown);
       pitchRotationalRateController.update(pitchControlInput, pitchRatePositiveNoseDown);
@@ -189,8 +195,9 @@ void Drone::start() {
       float32_t rollOutputPID  = rollRotationalRateController.getOutput() + rollAngleController.getOutput();
       float32_t pitchOutputPID = pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
       float32_t yawOutputPID   = yawRotationalRateController.getOutput();
-
-      static const float32_t throttleToKeepMotorsSpinning = throttleMapStart + 3;
+      
+      static const float32_t smallChangeToKeepMotorsSpinning = 3;
+      static const float32_t throttleToKeepMotorsSpinning = throttleMapStart + smallChangeToKeepMotorsSpinning;
 
       float32_t throttlePulse = 
         ReceiverManager::throttleAligned->getPulseLength(throttleToKeepMotorsSpinning, throttleMapMiddle, throttleMapEnd);
