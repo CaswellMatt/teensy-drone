@@ -1,1 +1,6 @@
 .vscode
+./drone/.vscode
+./.vscode
+./calibration-cli/.vscode
+./test-cli/.vscode
+
