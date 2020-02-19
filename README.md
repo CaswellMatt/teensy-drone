@@ -1,6 +1,6 @@
 # teensy-drone
 
-Teensy Flight Controller, Teensy 3.2 with platformio using vscode.
+Teensy Flight Controller, Teensy 4 with platformio using vscode.
 
 latest schematic and PCB design found [HERE](https://easyeda.com/mc18g13/teensy-drone)
 
@@ -12,7 +12,7 @@ latest schematic and PCB design found [HERE](https://easyeda.com/mc18g13/teensy-
 
 * Drone body
 * 6 Channel Receiver and transmitter
-* Teensy 3.2
+* Teensy 4
 * 4 ESC's
 * 4 Brushless Motors
 * 12v Battery and Power Distribution Board
