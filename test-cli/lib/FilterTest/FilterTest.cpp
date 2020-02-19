@@ -7,15 +7,14 @@
 #define TEST_FILTER_OUTPUT 1
 
 FilterTest::FilterTest() {
-  message = String("Test Filter Output");
+  m_message = String("Test Filter Output");
 }
 
 const String runFilterMessage = "Run filter on data";
 
 void FilterTest::setup() {
-
-  auto filterFunction = [this]() { runFilter(); };
-  addOption(TEST_FILTER_OUTPUT, filterFunction, runFilterMessage);
+  addExit(this);
+  addOption(this, &FilterTest::runFilter, runFilterMessage);
 } 
 
 void FilterTest::printTitle() {

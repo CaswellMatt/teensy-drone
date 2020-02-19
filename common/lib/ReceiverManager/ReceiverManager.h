@@ -90,16 +90,30 @@ namespace ReceiverManager
     float32_t min;
     float32_t mid;
 
+    constexpr int lowerLimitForCalibrationLogError = 800;
+    constexpr int upperLimitForCalibrationLogError = 2200;
+    auto logger = [&] () {
+      if (min < lowerLimitForCalibrationLogError || max < lowerLimitForCalibrationLogError || mid < lowerLimitForCalibrationLogError || 
+          min > upperLimitForCalibrationLogError || min > upperLimitForCalibrationLogError || min > upperLimitForCalibrationLogError) {
+        Serial.println("recalibrate receiver endpoints not setup");
+      }
+    };
+
+
     updateMinAndMaxForTimer(min, max, mid, ROLL_START);
+    logger();
     rollAligned = new ReceiverAligner(&rollInput, min, max, mid);
 
     updateMinAndMaxForTimer(min, max, mid, PITCH_START);
+    logger();
     pitchAligned = new ReceiverAligner(&pitchInput, min, max, mid);
 
-    updateMinAndMaxForTimer(min, max, mid, THROTTLE_START);
+    updateMinAndMaxForTimer(min, max, mid, THROTTLE_START); 
+    logger();
     throttleAligned  = new ReceiverAligner(&throttleInput, min, max, mid);
 
-    updateMinAndMaxForTimer(min, max, mid, YAW_START);
+    updateMinAndMaxForTimer(min, max, mid, YAW_START); 
+    logger();
     yawAligned  = new ReceiverAligner(&yawInput, min, max, mid);
     
   }
@@ -117,20 +131,20 @@ namespace ReceiverManager
   }
 
   void printAllPulseLengths() {
-    printPulseLength("roll",           rollInput.getPulseLength());
-    printPulseLength("pitch",          pitchInput.getPulseLength());
-    printPulseLength("throttle",       throttleInput.getPulseLength());
-    printPulseLength("yaw",            yawInput.getPulseLength());
-    printPulseLength("top left switch",  topLeftSwitchInput.getPulseLength());
-    printPulseLength("top right switch", topRightSwitchInput.getPulseLength());
+    printPulseLength("roll"            , rollInput.getPulseLengthMicros());
+    printPulseLength("pitch"           , pitchInput.getPulseLengthMicros());
+    printPulseLength("throttle"        , throttleInput.getPulseLengthMicros());
+    printPulseLength("yaw"             , yawInput.getPulseLengthMicros());
+    printPulseLength("top left switch" , topLeftSwitchInput.getPulseLengthMicros());
+    printPulseLength("top right switch", topRightSwitchInput.getPulseLengthMicros());
   }
 
   void printAlignedPulses() 
   {
-    printPulseLength("roll",           rollAligned->getPulseLength());
-    printPulseLength("pitch",          pitchAligned->getPulseLength());
-    printPulseLength("throttle",       throttleAligned->getPulseLength());
-    printPulseLength("yaw",            yawAligned->getPulseLength());
+    printPulseLength("roll"            , rollAligned->getPulseLengthAligned());
+    printPulseLength("pitch"           , pitchAligned->getPulseLengthAligned());
+    printPulseLength("throttle"        , throttleAligned->getPulseLengthAligned());
+    printPulseLength("yaw"             , yawAligned->getPulseLengthAligned());
   }
 
 }

@@ -4,11 +4,12 @@
 #include <MPU9250.h>
 #include "MemoryLocations.h"
 
-#define SPI_CLOCK 16000000  // 8MHz clock works.
+#define ONE_MHZ 1000000
+#define SPI_CLOCK 18 * ONE_MHZ 
 
 #define SS_PIN   10 
 
-namespace {
+namespace  {
 
   const int xAxisIndex = 0;
   const int yAxisIndex = 1;
@@ -36,36 +37,29 @@ namespace {
 MARG::MARG(bool accelerationSoftwareFiltersOn, bool gyroSoftwareFiltersOn) : 
   m_mpu(SPI_CLOCK, SS_PIN),
   m_accelerationSoftwareFiltersOn(accelerationSoftwareFiltersOn),
-  m_gyroSoftwareFiltersOn(gyroSoftwareFiltersOn)
-  {
+  m_gyroSoftwareFiltersOn(gyroSoftwareFiltersOn) {
 
   delay(5000);
-
   SPI.begin();
 
-	m_mpu.init();
+  m_mpu.init();
 
-	uint8_t wai = m_mpu.whoami();
-	if (wai == 0x71) {
-		DEBUG_SERIAL.println("Successful connection");
-	}
-	else{
-		DEBUG_SERIAL.print("Failed connection: ");
-		DEBUG_SERIAL.println(wai, HEX);
-	}
+  uint8_t wai = m_mpu.whoami();
+  if (wai == 0x71) {
+    DEBUG_SERIAL.println("Successful connection");
+  } else{
+    DEBUG_SERIAL.print("Failed connection: ");
+    DEBUG_SERIAL.println(wai, HEX);
+  }
 
 
-	uint8_t wai_AK8963 = m_mpu.AK8963_whoami();
-	if (wai_AK8963 == 0x48){
-		DEBUG_SERIAL.println("Successful connection to mag");
-	}
-	else{
-		DEBUG_SERIAL.print("Failed connection to mag: ");
-		DEBUG_SERIAL.println(wai_AK8963, HEX);
-	}
-
-	m_mpu.calib_acc();
-	m_mpu.calib_mag();
+  uint8_t wai_AK8963 = m_mpu.AK8963_whoami();
+  if (wai_AK8963 == 0x48){
+    DEBUG_SERIAL.println("Successful connection to mag");
+  } else{
+    DEBUG_SERIAL.print("Failed connection to mag: ");
+    DEBUG_SERIAL.println(wai_AK8963, HEX);
+  }
   
   float32_t xSum = 0;
   float32_t ySum = 0;
@@ -104,7 +98,7 @@ void MARG::read() {
   m_accelerationRaw.v0 = accelXDirection * map(m_mpu.accel_data[xAxisIndex], m_accelerationCalbrationMin.v0, m_accelerationCalbrationMax.v0, -G, G);
   m_accelerationRaw.v1 = accelYDirection * map(m_mpu.accel_data[yAxisIndex], m_accelerationCalbrationMin.v1, m_accelerationCalbrationMax.v1, -G, G);
   m_accelerationRaw.v2 = accelZDirection * map(m_mpu.accel_data[zAxisIndex], m_accelerationCalbrationMin.v2, m_accelerationCalbrationMax.v2, -G, G);
-  
+
   if (m_accelerationSoftwareFiltersOn)
   {
     m_accelerometerFilterX.update(m_accelerationRaw.v0);
@@ -115,7 +109,7 @@ void MARG::read() {
     
     m_accelerometerFilterZ.update(m_accelerationRaw.v2);
     m_acceleration.v2 = m_accelerometerFilterZ.get();
-  } else {
+  }  else {
     m_acceleration = m_accelerationRaw;
   }
 
@@ -128,7 +122,7 @@ void MARG::read() {
     
     m_gyroscopeFilterZ.update(m_rotationalRatesRaw.v2);
     m_rotationalRates.v2 = m_gyroscopeFilterZ.get();
-  } else {
+  }  else {
     m_rotationalRates = m_rotationalRatesRaw;
   }
   
@@ -138,9 +132,25 @@ void MARG::read() {
   m_magneticsRaw.v2 = map(m_mpu.mag_data[zAxisIndex], m_magneticsCalibrationMin.v2, m_magneticsCalibrationMax.v2, -1, 1);
 
   m_magnetics = m_magneticsRaw;
-
 }
 
+void MARG::readRaw() {
+  m_mpu.read_all();
+  
+  m_rotationalRatesRaw.v0 = m_mpu.gyro_data[rollAxisIndex];
+  m_rotationalRatesRaw.v1 = m_mpu.gyro_data[pitchAxisIndex];
+  m_rotationalRatesRaw.v2 = m_mpu.gyro_data[yawAxisIndex];
+
+  m_accelerationRaw.v0 = m_mpu.accel_data[xAxisIndex];
+  m_accelerationRaw.v1 = m_mpu.accel_data[yAxisIndex];
+  m_accelerationRaw.v2 = m_mpu.accel_data[zAxisIndex];
+
+  //TODO: can use data read interrupts to avoid reading mag data too often when not changed?
+  m_magneticsRaw.v0 = m_mpu.mag_data[xAxisIndex];
+  m_magneticsRaw.v1 = m_mpu.mag_data[yAxisIndex];
+  m_magneticsRaw.v2 = m_mpu.mag_data[zAxisIndex];
+
+}
 
 void MARG::readValuesForCalibration() {
   int eeAddress = ACCEL_START;

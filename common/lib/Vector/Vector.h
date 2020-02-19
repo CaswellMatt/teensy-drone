@@ -33,6 +33,16 @@ class Vector {
              v2 != rhs.v2;
     };
 
+    float32_t &operator[] (int i) {
+      if (i == 0) {
+        return v0;
+      } else if (i == 1) {
+        return v1;
+      } else if (i == 2) {
+        return v2;
+      }
+    }
+
 };
 
 #endif

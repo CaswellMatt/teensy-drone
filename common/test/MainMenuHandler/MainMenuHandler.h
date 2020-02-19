@@ -3,19 +3,18 @@
 #define MAIN_MENU_HANDLER
 
 #include "MenuOptionHandler.h"
-
+#include "DynamicArray.h"
 #define EXIT_INDEX 0
-
 class MainMenuHandler {
 public:
 
   void setup();
   void start();
 
-  void addOptionHandler(int menuIndex, MenuOptionHandler* menuOptionHandler);
+  void addOptionHandler(MenuOptionHandler* menuOptionHandler);
 
 private:
-  std::map<int, MenuOptionHandler*> handlerMap;
+  DynamicArray<MenuOptionHandler*> m_handlers;
 
 };
 

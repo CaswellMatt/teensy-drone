@@ -4,6 +4,7 @@ Drone drone;
 
 void setup() {
   drone.setup();
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop() {

@@ -6,15 +6,16 @@
 #include "Constants.h"
 #include "MARG.h"
 
-#include "MotorControlManager.h"
-#include "MotorSignalController.h"
-
-#include <functional>
+// #include "MotorControlManager.h"
+// #include "MotorSignalController.h"
+#include "DShotMotorController.h"
+#include <arm_math.h>
 
 class MotorNoiseTest : public MenuOptionHandler {
 private:
     long timer;
     MARG* m_marg;
+    DShotMotorController m_motorController;
 
 public:
 
@@ -26,13 +27,10 @@ public:
   virtual void setup() override;
   virtual void printTitle() override;
 
-  float32_t frontLeftPulse  = throttleMapStart;
-  float32_t frontRightPulse = throttleMapStart;
-  float32_t backLeftPulse   = throttleMapStart;
-  float32_t backRightPulse  = throttleMapStart;
+  float32_t m_speed  = THROTTLE_MAP_START;
 
-  void runTestOnMotors(MotorSignalController* motorArray, int motorCount, Vector (MARG::*sensor)());
-
+  void runTestOnMotors(Vector (MARG::*sensor)());
+  void runAllMotorTest();
 };
 
 #endif 

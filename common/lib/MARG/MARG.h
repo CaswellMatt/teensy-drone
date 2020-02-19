@@ -17,6 +17,7 @@ class MARG {
   public:
     MARG(bool accelerationSoftwareFilterOn = false, bool gyroSoftwareFiltersOn = false);
     void read();
+    void readRaw();
 
     Vector getMagneticsRaw() { return m_magneticsRaw; }
     Vector getAccelerationRaw() { return m_accelerationRaw; }

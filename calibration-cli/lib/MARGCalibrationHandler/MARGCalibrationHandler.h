@@ -2,7 +2,7 @@
 #define MARG_CALIBRATION_HANDLER
 
 #include <SPI.h>
-#include <MPU9250.h>
+#include <MARG.h>
 #include <arm_math.h>
 #include <map>
 #include "MenuOptionHandler.h"
@@ -15,8 +15,7 @@
 
 class MARGCalibrationHandler : public MenuOptionHandler {
 public:
-//TODO: replace mpu with marg
-  MPU9250 mpu;
+  MARG m_marg;
 
   MARGCalibrationHandler();
 
@@ -26,13 +25,13 @@ public:
   void checkMaxAndMinAndSet(float32_t input, float32_t& max, float32_t& min);
   void checkMaxAndMinAndSetForOneValue(float32_t input, float32_t& maxOrMin);
 
-  void calibrate(float* dataArray, int eepromStartAddress);
-  void calibrateOneValue(float& data, int eepromStartAddress);
+  void calibrate(Vector (MARG::*data)(), int eepromStartAddress);
+  void calibrateOneValue(int index, Vector (MARG::*data)(), int eepromStartAddress);
   void calibrateAcceleration();
   void readCalibrationValues();
   void printTestValues();
   void writeManualValuesToCalibration();
-
+  void calibrateMagnitometer();
 };
 
 #endif 

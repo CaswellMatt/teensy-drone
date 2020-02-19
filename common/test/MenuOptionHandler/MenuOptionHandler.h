@@ -5,24 +5,50 @@
 #include "MenuOption.h"
 #include "EEPROM.h"
 #include "MemoryLocations.h"
+#include "DynamicArray.h"
 
 class MenuOptionHandler {
 private:
-  std::map<int, MenuOption*> optionsMap;
+  DynamicArray<IMenuOption*> m_options;
+  bool m_shouldContinue;
 public:
 
   void printMessage() {
-    DEBUG_SERIAL.println(message);
+    DEBUG_SERIAL.println(m_message);
   }
 
   virtual void printTitle() = 0;
   virtual void setup() = 0;
 
-  void addOption(int optionIndex, std::function<void()> optionFunction, const String optionMenuMessageText);
+  void exit() {
+    m_shouldContinue = false;
+  }
+
+  template<typename Type>
+  void addExit(Type* instance) {
+    IMenuOption* menuOption = new MenuOption<Type>(
+      instance,
+      &Type::exit,
+      "exit"
+    );
+
+    m_options.append(menuOption);
+  }
+
+  template<typename Type>
+  void addOption(Type* instance, void (Type::*optionFunction)(), const String optionMenuMessageText) {
+    IMenuOption* menuOption = new MenuOption<Type>(
+      instance,
+      optionFunction, 
+      optionMenuMessageText
+    );
+    
+    m_options.append(menuOption);
+  }
 
   void start();
 protected:
-  String message;
+  String m_message;
 
 };
 

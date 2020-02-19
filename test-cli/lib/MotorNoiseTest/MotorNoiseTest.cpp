@@ -8,7 +8,7 @@
 #define ALL_MOTORS_TEST        5
 
 MotorNoiseTest::MotorNoiseTest() {
-  message = String("Test motor noise");
+  m_message = String("Test motor noise");
 }
 
 const String backLeftTestString   = "Test back left motor noise";
@@ -19,42 +19,42 @@ const String AllMotorsTestString  = "Test all motors noise";
 
 void MotorNoiseTest::setup() {
 
-  MotorControlManager::setup();
+  // MotorControlManager::setup();
 
   const int singleMotorTestCount = 1;
 
   Vector (MARG::*sensor)() = &MARG::getRotationalRates;
 
-  auto backLeftMotorFunctionCall = [this, sensor]() { 
-    runTestOnMotors(&MotorControlManager::backLeft, singleMotorTestCount, sensor); 
-  };
+  // auto backLeftMotorFunctionCall = [this, sensor]() { 
+  //   runTestOnMotors(&MotorControlManager::backLeft, singleMotorTestCount, sensor); 
+  // };
 
-  addOption(BACK_LEFT_TEST_INDEX, backLeftMotorFunctionCall, backLeftTestString);
+  // addOption(BACK_LEFT_TEST_INDEX, backLeftMotorFunctionCall, backLeftTestString);
 
-  auto backRightMotorFunctionCall = [this, sensor]() { 
-    runTestOnMotors(&MotorControlManager::backRight, singleMotorTestCount, sensor); 
-  };
-  addOption(BACK_RIGHT_TEST_INDEX, backRightMotorFunctionCall, backRightTestString);
+  // auto backRightMotorFunctionCall = [this, sensor]() { 
+  //   runTestOnMotors(&MotorControlManager::backRight, singleMotorTestCount, sensor); 
+  // };
+  // addOption(BACK_RIGHT_TEST_INDEX, backRightMotorFunctionCall, backRightTestString);
 
-  auto frontLeftMotorFunctionCall = [this, sensor]() { 
-    runTestOnMotors(&MotorControlManager::frontLeft, singleMotorTestCount, sensor); 
-  };
-  addOption(FRONT_LEFT_TEST_INDEX, frontLeftMotorFunctionCall, frontLeftTestString);
+  // auto frontLeftMotorFunctionCall = [this, sensor]() { 
+  //   runTestOnMotors(&MotorControlManager::frontLeft, singleMotorTestCount, sensor); 
+  // };
+  // addOption(FRONT_LEFT_TEST_INDEX, frontLeftMotorFunctionCall, frontLeftTestString);
 
-  auto frontRightMotorFunctionCall = [this, sensor]() { 
-    runTestOnMotors(&MotorControlManager::frontRight, singleMotorTestCount, sensor); 
-  };
-  addOption(FRONT_RIGHT_TEST_INDEX, frontRightMotorFunctionCall, frontRightTestString);
+  // auto frontRightMotorFunctionCall = [this, sensor]() { 
+  //   runTestOnMotors(&MotorControlManager::frontRight, singleMotorTestCount, sensor); 
+  // };
+  // addOption(FRONT_RIGHT_TEST_INDEX, frontRightMotorFunctionCall, frontRightTestString);
 
-  auto runAllMotorsFunctionCall = [this, sensor]() { 
-    MotorSignalController controller[4] = {
-      MotorControlManager::frontRight, MotorControlManager::frontLeft, 
-      MotorControlManager::backRight, MotorControlManager::backLeft
-    };
-    runTestOnMotors(controller, 4, sensor);
-  };
-  addOption(ALL_MOTORS_TEST, runAllMotorsFunctionCall, AllMotorsTestString);
-
+  // auto runAllMotorsFunctionCall = [this, sensor]() { 
+  //   MotorSignalController controller[4] = {
+  //     MotorControlManager::frontRight, MotorControlManager::frontLeft, 
+  //     MotorControlManager::backRight, MotorControlManager::backLeft
+  //   };
+  //   runTestOnMotors(controller, 4, sensor);
+  // };
+  addExit(this);
+  addOption(this, &MotorNoiseTest::runAllMotorTest, AllMotorsTestString);
   m_marg = new MARG();
 
   timer = micros();
@@ -64,7 +64,7 @@ void MotorNoiseTest::printTitle() {
   DEBUG_SERIAL.println("Motor Noise Test");
 }
 
-void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int motorCount, Vector (MARG::*sensor)()) {
+void MotorNoiseTest::runTestOnMotors(Vector (MARG::*sensor)()) {
   const uint32_t BUFFER_SIZE = 2048;
 
   const uint32_t fftSize = BUFFER_SIZE/2;
@@ -89,22 +89,18 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
   for (int i = 0; i < 1000; ++i) {
     while(micros() - timer < LOOPTIME_US);
     timer = micros();
-    for(int i = 0; i < motorCount; ++i) {
-      (*(motorArray + i)).trigger(throttleMapStart);
-    }
-    
+    m_motorController.setSpeed(THROTTLE_MAP_START, THROTTLE_MAP_START, THROTTLE_MAP_START, THROTTLE_MAP_START);
   }
 
   while(!exit) {
     while(micros() - timer < LOOPTIME_US);
     timer = micros();
-
-    for(int i = 0; i < motorCount; ++i) {
-      (*(motorArray + i)).trigger(backLeftPulse);
-    }
-
     m_marg->read();
-    if (backLeftPulse >= signalSetPoint && iterationCount > 6000) {
+
+    m_motorController.setSpeed(m_speed, m_speed, m_speed, m_speed);
+  
+    m_marg->read();
+    if (m_speed >= signalSetPoint && iterationCount > 6000) {
       // buffer[bufferIndex] = sin(2 * PI * 20 * (bufferIndex/2) / fftSize); // frequence peak at 20hz for checking fft
       bufferX[bufferIndex] = (m_marg->*sensor)().v0;
       bufferY[bufferIndex] = (m_marg->*sensor)().v1;
@@ -116,9 +112,9 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
       
       bufferIndex+=2;
 
-    } else if (backLeftPulse < signalSetPoint) {
+    } else if (m_speed < signalSetPoint) {
       increment *= 1.0005;
-      backLeftPulse += direction*increment;
+      m_speed += direction*increment;
     }
     
     iterationCount++;
@@ -177,6 +173,11 @@ void MotorNoiseTest::runTestOnMotors(MotorSignalController* motorArray, int moto
     DEBUG_SERIAL.println(srcZ[indexForRealValues], 5);
   }
 
-  backLeftPulse=throttleMapStart;
+  m_speed=THROTTLE_MAP_START;
 
+}
+
+void MotorNoiseTest::runAllMotorTest() {
+  Vector (MARG::*sensor)() = &MARG::getRotationalRates;
+  runTestOnMotors(sensor);
 }

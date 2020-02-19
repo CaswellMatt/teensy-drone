@@ -10,11 +10,11 @@
 
 #include "arm_math.h"
 
-const long LOOPTIME_US = 1000;
-const float32_t LOOPTIME_S = (float32_t)LOOPTIME_US / 1000000;
+constexpr long LOOPTIME_US = 200;
+constexpr float32_t LOOPTIME_S = (float32_t)LOOPTIME_US / 1000000;
 
-const float32_t throttleMapStart  = 125;
-const float32_t throttleMapEnd    = 250;
-const float32_t throttleMapMiddle = (throttleMapStart + throttleMapEnd) / 2;
+constexpr float32_t THROTTLE_MAP_START  = 0;
+constexpr float32_t THROTTLE_MAP_END    = 1796;
+constexpr float32_t THROTTLE_MAP_MIDDLE = (THROTTLE_MAP_START + THROTTLE_MAP_END) / 2;
 
 #endif

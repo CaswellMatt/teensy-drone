@@ -4,41 +4,29 @@ void MenuOptionHandler::start() {
   printTitle();
   int exitIndex = 0;
 
-  bool shouldContinue = true;
-  optionsMap[exitIndex] = new MenuOption(
-    [&shouldContinue](){ shouldContinue = false; },
-    "exit"
-  );
+  m_shouldContinue = true;
 
-  while (shouldContinue) {
+  while (m_shouldContinue) {
 
     DEBUG_SERIAL.println();
 
-    std::map<int, MenuOption*>::iterator itr; 
-    for (itr = std::next(optionsMap.begin()); itr != optionsMap.end(); ++itr) { 
-      DEBUG_SERIAL.print(itr->first);DEBUG_SERIAL.print(". ");
-      itr->second->printMessage(); 
+    for (int i = 1; i < m_options.size(); ++i) {
+      DEBUG_SERIAL.print(i);DEBUG_SERIAL.print(". ");
+      m_options.at(i)->printMessage(); 
     }
 
     DEBUG_SERIAL.print(0);DEBUG_SERIAL.print(". ");
-    optionsMap[0]->printMessage(); 
+    m_options.at(0)->printMessage(); 
 
     DEBUG_SERIAL.println();
 
     while(!DEBUG_SERIAL.available()) {};
     
     int asciiToNumberSelectionInput = DEBUG_SERIAL.read() - '0';
-    if (optionsMap.find( asciiToNumberSelectionInput ) != optionsMap.end()) {
-      optionsMap[asciiToNumberSelectionInput]->callback();
+    if (asciiToNumberSelectionInput >= 0 && asciiToNumberSelectionInput < m_options.size()) {
+      m_options.at(asciiToNumberSelectionInput)->callback();
     } else {
       DEBUG_SERIAL.println("no option by that value available");
     }
   };
 }
-
-  void MenuOptionHandler::addOption(int optionIndex, std::function<void()> optionFunction, const String optionMenuMessageText) {
-    optionsMap[optionIndex] = new MenuOption(
-      optionFunction, 
-      optionMenuMessageText
-    );
-  }

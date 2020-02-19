@@ -22,8 +22,8 @@ const String printWrittenCalibrationValues = "Print written calibration values \
 String writeManualCalibrationText = "Write manual values";
 
 MARGCalibrationHandler::MARGCalibrationHandler() : 
-  mpu(SPI_CLOCK, SS_PIN) {
-    message = String("Calibrate MARG");
+  m_marg() {
+    m_message = String("Calibrate MARG");
 }
 
 
@@ -47,45 +47,14 @@ void MARGCalibrationHandler::printTitle() {
 
 void MARGCalibrationHandler::setup() {
 
-  auto accelerationCalibrator = [this](){ calibrateAcceleration(); };
-  addOption(ACCELERATION_INDEX, accelerationCalibrator, accelerationOptionText);
-
-  auto magneticsCalibrator = [this](){ calibrate(mpu.mag_data, MAG_START);  };
-  addOption(MAGNETICS_INDEX, magneticsCalibrator, magneticsOptionText);
-
-  auto printerAllValues = [this](){ printTestValues();  };
-  addOption(PRINT_TEST_INDEX, printerAllValues, printTestOptionText);
-
-  auto printSavedCalibration = [this](){ readCalibrationValues();  };
-  addOption(PRINT_SAVED_CALIBRATION_INDEX, printSavedCalibration, printWrittenCalibrationValues);
-    
-  auto writeManualCalibrations = [this](){ writeManualValuesToCalibration();  };
-  addOption(WRITE_MANUAL_TEST_VALUES_INDEX, writeManualCalibrations, writeManualCalibrationText);
-
-  SPI.begin();
+  addExit(this);
+  addOption(this, &MARGCalibrationHandler::calibrateAcceleration, accelerationOptionText);
+  addOption(this, &MARGCalibrationHandler::calibrateMagnitometer, magneticsOptionText);
+  addOption(this, &MARGCalibrationHandler::printTestValues      , printTestOptionText);
+  addOption(this, &MARGCalibrationHandler::readCalibrationValues         , printWrittenCalibrationValues);
+  addOption(this, &MARGCalibrationHandler::writeManualValuesToCalibration, writeManualCalibrationText);
 
   delay(20);
-
-  mpu.init(true);
-
-  uint8_t wai = mpu.whoami();
-  if (wai == 0x71){
-    DEBUG_SERIAL.println("Successful connection");
-  }
-  else{
-    DEBUG_SERIAL.print("Failed connection: ");
-    DEBUG_SERIAL.println(wai, HEX);
-  }
-
-  uint8_t wai_AK8963 = mpu.AK8963_whoami();
-  if (wai_AK8963 == 0x48){
-    DEBUG_SERIAL.println("Successful connection to mag");
-  }
-  else{
-    DEBUG_SERIAL.print("Failed connection to mag: ");
-    DEBUG_SERIAL.println(wai_AK8963, HEX);
-  }
-  mpu.calib_acc();
 
 }
 
@@ -97,7 +66,7 @@ void MARGCalibrationHandler::calibrateAcceleration() {
     delay(1000);
     DEBUG_SERIAL.println(printString);
     delay(3000);
-    calibrateOneValue(mpu.accel_data[accelIndex], eepromAddress);
+    calibrateOneValue(accelIndex, &MARG::getAccelerationRaw, eepromAddress);
 
     eepromAddress+=sizeof(float32_t);
   };
@@ -119,7 +88,7 @@ void MARGCalibrationHandler::calibrateAcceleration() {
 
 }
 
-void MARGCalibrationHandler::calibrateOneValue(float& data, int eepromStartAddress) {
+void MARGCalibrationHandler::calibrateOneValue(int index, Vector (MARG::*dataGetter)(), int eepromStartAddress) {
 
   DEBUG_SERIAL.println("started calibration");
 
@@ -134,9 +103,9 @@ void MARGCalibrationHandler::calibrateOneValue(float& data, int eepromStartAddre
     DEBUG_SERIAL.println(j);
 
     for (int i = 0; i < count; ++i) {
-      mpu.read_all();
-
-      acculumator += data;
+      m_marg.readRaw();
+      Vector data = (m_marg.*(dataGetter))();
+      acculumator += data[index];
 
       delayMicroseconds(500);
     }
@@ -169,7 +138,7 @@ void MARGCalibrationHandler::readCalibrationValues() {
 
 
 
-void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress) {
+void MARGCalibrationHandler::calibrate(Vector (MARG::*dataGetter)(), int eepromStartAddress) {
 
   DEBUG_SERIAL.println("started calibration");
 
@@ -192,11 +161,11 @@ void MARGCalibrationHandler::calibrate(float* dataArray, int eepromStartAddress)
     DEBUG_SERIAL.println(j);
 
     for (int i = 0; i < count; ++i) {
-      mpu.read_all();
-    
-      xAcculumator += *(dataArray);
-      yAcculumator += *(dataArray + 1);
-      zAcculumator += *(dataArray + 2);
+      m_marg.readRaw();
+      Vector data = (m_marg.*(dataGetter))();
+      xAcculumator += data.v0;
+      yAcculumator += data.v1;
+      zAcculumator += data.v2;
 
       delayMicroseconds(500);
     }
@@ -255,16 +224,16 @@ void MARGCalibrationHandler::printTestValues() {
 
   DEBUG_SERIAL.println("readings");
   for (int i = 0; i < 10000; ++i) {
-    mpu.read_all();
-    DEBUG_SERIAL.print(" accel x ");DEBUG_SERIAL.print(mpu.accel_data[0], 6);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(" accel y ");DEBUG_SERIAL.print(mpu.accel_data[1], 6);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(" accel z ");DEBUG_SERIAL.print(mpu.accel_data[2], 6);DEBUG_SERIAL.print("       ");
-    DEBUG_SERIAL.print(" mag x ");DEBUG_SERIAL.print(mpu.mag_data[0], 6);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(" mag y ");DEBUG_SERIAL.print(mpu.mag_data[1], 6);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(" mag z ");DEBUG_SERIAL.print(mpu.mag_data[2], 6);DEBUG_SERIAL.print("       ");
-    DEBUG_SERIAL.print(" gyro x ");DEBUG_SERIAL.print(mpu.gyro_data[0], 6);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(" gyro y ");DEBUG_SERIAL.print(mpu.gyro_data[1], 6);DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(" gyro z ");DEBUG_SERIAL.print(mpu.gyro_data[2], 6);DEBUG_SERIAL.print(" ");
+    m_marg.readRaw();
+    DEBUG_SERIAL.print(" accel x ");DEBUG_SERIAL.print(m_marg.getAccelerationRaw().v0, 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" accel y ");DEBUG_SERIAL.print(m_marg.getAccelerationRaw().v1, 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" accel z ");DEBUG_SERIAL.print(m_marg.getAccelerationRaw().v2, 6);DEBUG_SERIAL.print("       ");
+    DEBUG_SERIAL.print(" mag x ");DEBUG_SERIAL.print(m_marg.getMagneticsRaw().v0, 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" mag y ");DEBUG_SERIAL.print(m_marg.getMagneticsRaw().v1, 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" mag z ");DEBUG_SERIAL.print(m_marg.getMagneticsRaw().v2, 6);DEBUG_SERIAL.print("       ");
+    DEBUG_SERIAL.print(" gyro x ");DEBUG_SERIAL.print(m_marg.getRotationalRatesRaw().v0, 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" gyro y ");DEBUG_SERIAL.print(m_marg.getRotationalRatesRaw().v1, 6);DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(" gyro z ");DEBUG_SERIAL.print(m_marg.getRotationalRatesRaw().v2, 6);DEBUG_SERIAL.print(" ");
 
     DEBUG_SERIAL.println();
   
@@ -317,4 +286,8 @@ void MARGCalibrationHandler::writeManualValuesToCalibration() {
   DEBUG_SERIAL.println("manual values written");
 
 
+}
+
+void MARGCalibrationHandler::calibrateMagnitometer() {
+  calibrate(&MARG::getMagneticsRaw, MAG_START);  
 }

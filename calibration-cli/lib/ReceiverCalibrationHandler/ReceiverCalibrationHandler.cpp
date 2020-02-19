@@ -19,7 +19,7 @@ const String printOptionText = "Print Receiver Values";
 const String printSavedValuesText = "Print Saved Receiver Endpoints";
 
 ReceiverCalibrationHandler::ReceiverCalibrationHandler() {
-  message = String("Calibrate Receiver");
+  m_message = String("Calibrate Receiver");
 }
 
 void ReceiverCalibrationHandler::printTitle() {
@@ -28,38 +28,16 @@ void ReceiverCalibrationHandler::printTitle() {
 
 void ReceiverCalibrationHandler::setup() {
 
-  auto rollCalibrator = [this]() { calibrateReceiver(&ReceiverManager::rollInput, ROLL_START); };
-  auto pitchCalibrator = [this]() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
-  auto yawCalibrator = [this]() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
-  auto throttleCalibrator = [this]() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
+  addExit(this);
 
-  addOption(ROLL_INDEX, rollCalibrator, rollOptionText);
-  addOption(PITCH_INDEX, pitchCalibrator, pitchOptionText);
-  addOption(YAW_INDEX, yawCalibrator, yawOptionText);
-  addOption(THROTTLE_INDEX, throttleCalibrator, throttleOptionText);
-
-  auto printAll = [this]() { 
-    for (int i = 0; i < 1000; ++i) {
-      ReceiverManager::printAllPulseLengths();
-      DEBUG_SERIAL.println();
-    }
-  };
-
-  addOption(PRINT_INDEX, printAll, printOptionText);
-
-  auto printSaved = [this]() { 
-    
-    printReceiver("roll", ROLL_START);
-    printReceiver("pitch", PITCH_START);
-    printReceiver("throttle", THROTTLE_START);
-    printReceiver("yaw", YAW_START);
-
-  };
-
-  addOption({PRINT_SAVED_INDEX}, printSaved, printSavedValuesText);
+  addOption(this, &ReceiverCalibrationHandler::rollCalibrator    , rollOptionText);
+  addOption(this, &ReceiverCalibrationHandler::pitchCalibrator   , pitchOptionText);
+  addOption(this, &ReceiverCalibrationHandler::yawCalibrator     , yawOptionText);
+  addOption(this, &ReceiverCalibrationHandler::throttleCalibrator, throttleOptionText);
+  addOption(this, &ReceiverCalibrationHandler::printAll          , printOptionText);
+  addOption(this, &ReceiverCalibrationHandler::printSaved        , printSavedValuesText);
 
   ReceiverManager::setupReceivers();
-
 }
 
 void ReceiverCalibrationHandler::printReceiver(String receiverName, int startAddress) {
@@ -91,11 +69,11 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   DEBUG_SERIAL.println("Move the stick to the max position");
   delay(5000);
 
-  auto getAveragePulseLengthForThisTimer = [](ReceiverPulseTimer* timer, int size) {
+  auto getAveragePulseLengthForThisTimer = [](const ReceiverPulseTimer& timer, int size) {
     long sumOfPulse = 0;
 
     for (int i = 0; i < size; ++i) {
-      sumOfPulse += timer->getPulseLength();
+      sumOfPulse += timer.getPulseLengthMicros();
       delay(2);
     }
 
@@ -107,7 +85,7 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   int eeAddress = eepromStartAddress;
 
   DEBUG_SERIAL.println(eeAddress);
-  float32_t max = getAveragePulseLengthForThisTimer(timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
+  float32_t max = getAveragePulseLengthForThisTimer(*timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   EEPROM.put(eeAddress, max);
   DEBUG_SERIAL.println("done");
   DEBUG_SERIAL.print("Max = ");DEBUG_SERIAL.println(max);
@@ -118,7 +96,7 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   DEBUG_SERIAL.println("Move the stick to the min position");
   delay(5000);
 
-  float32_t min = getAveragePulseLengthForThisTimer(timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
+  float32_t min = getAveragePulseLengthForThisTimer(*timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   eeAddress += sizeof(float32_t);
   DEBUG_SERIAL.println(eeAddress);
   EEPROM.put(eeAddress, min);
@@ -131,7 +109,7 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   DEBUG_SERIAL.println("Move the stick to the centre position");
   delay(5000);
 
-  float32_t mid = getAveragePulseLengthForThisTimer(timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
+  float32_t mid = getAveragePulseLengthForThisTimer(*timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   eeAddress += sizeof(float32_t);
   DEBUG_SERIAL.println(eeAddress);
   EEPROM.put(eeAddress, mid);
@@ -139,5 +117,26 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   DEBUG_SERIAL.print("Mid = ");DEBUG_SERIAL.println(mid);
   DEBUG_SERIAL.println();
   delay(500);
+
+};
+
+void ReceiverCalibrationHandler::rollCalibrator() { calibrateReceiver(&ReceiverManager::rollInput, ROLL_START); };
+void ReceiverCalibrationHandler::pitchCalibrator() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
+void ReceiverCalibrationHandler::yawCalibrator() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
+void ReceiverCalibrationHandler::throttleCalibrator() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
+
+void ReceiverCalibrationHandler::printAll() { 
+  for (int i = 0; i < 1000; ++i) {
+    ReceiverManager::printAllPulseLengths();
+    DEBUG_SERIAL.println();
+  }
+};
+
+void ReceiverCalibrationHandler::printSaved() { 
+
+  printReceiver("roll", ROLL_START);
+  printReceiver("pitch", PITCH_START);
+  printReceiver("throttle", THROTTLE_START);
+  printReceiver("yaw", YAW_START);
 
 };

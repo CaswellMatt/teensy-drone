@@ -15,6 +15,12 @@ public:
   void calibrateReceiver(ReceiverPulseTimer* timer, int eepromStartAddress);
   void printReceiver(String receiverName, int startAddress);
 
+  void rollCalibrator();
+  void pitchCalibrator();
+  void yawCalibrator();
+  void throttleCalibrator();
+  void printAll();
+  void printSaved();
 };
 
 #endif 

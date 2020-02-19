@@ -106,7 +106,7 @@ float32_t OrientationFilter::getRoll() {
   float32_t sinr_cosp = 2 * (q.q0 * q.q1 + q.q2 * q.q3);
   float32_t cosr_cosp = 1 - 2 * (q.q1 * q.q1 + q.q2 * q.q2);
   float32_t roll = atan2(sinr_cosp, cosr_cosp);
-  return roll;
+  return -roll;
 }
 
 
@@ -122,7 +122,7 @@ float32_t OrientationFilter::getPitch() {
     pitch = asin(sinp);    
   }
 
-  return pitch;
+  return -pitch;
 }
 
 
