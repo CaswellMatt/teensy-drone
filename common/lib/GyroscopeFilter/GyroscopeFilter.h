@@ -14,13 +14,13 @@ public:
 
 private:
 
-  float32_t* m_inputCoefficientsBNotchFilter90hz;
-  float32_t* m_outputCoefficientsANotchFilter90hz;
+  float32_t* m_inputCoefficientsBNotchFilter60hz;
+  float32_t* m_outputCoefficientsANotchFilter60hz;
 
   float32_t* m_inputCoefficientsBNotchFilter265hz;
   float32_t* m_outputCoefficientsANotchFilter265hz;
 
-  IIRFilter* m_ellipticalFilterNotchFilter90hz;
+  IIRFilter* m_ellipticalFilterNotchFilter60hz;
   IIRFilter* m_ellipticalFilterNotchFilter265hz;
 
   float32_t* m_inputCoefficientsBLowFilter90hz;

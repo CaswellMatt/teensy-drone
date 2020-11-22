@@ -22,7 +22,7 @@ namespace  {
   const int direction = 1;
 
   //roll positive right wing down
-  //pitch positive nose down 
+  //pitch positive nose down
   //yaw positive nose left
   const int gyroXDirection = direction;
   const int gyroYDirection = direction;
