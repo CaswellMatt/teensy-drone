@@ -18,8 +18,8 @@ namespace {
   float32_t backLeftPulse   = THROTTLE_MAP_START;
   float32_t backRightPulse  = THROTTLE_MAP_START;
 
-  const bool ACCELERATION_FILTER_ON = false;
-  const bool GYRO_FILTER_ON = false;
+  const bool ACCELERATION_FILTER_ON = true;
+  const bool GYRO_FILTER_ON = true;
 
   const int MIDPOINT_FOR_RECEIVER_PULSE = 1500;
 
@@ -135,15 +135,15 @@ bool Drone::motorsAreActive() {
 
 void Drone::start() {
   
-  constexpr float32_t factor = 1;
+  constexpr float32_t factor = 10;
   constexpr float32_t outputLimit = 75 * factor;
   constexpr float32_t integralLimit = 75 * factor;
   static_assert(outputLimit >= integralLimit, "cannot have and output limit for pid less than integral limit");
 
-  constexpr float32_t Kp = 13 * factor;
+  constexpr float32_t Kp = 30 * factor;
   constexpr float32_t Ki = 0.003 * factor;
-  constexpr float32_t Kd = 4 * factor;
-  
+  constexpr float32_t Kd = 3 * factor;
+
   PIDController rollRotationalRateController (Kp, Ki, Kd, outputLimit, integralLimit);
   PIDController pitchRotationalRateController(Kp, Ki, Kd, outputLimit, integralLimit);
   PIDController yawRotationalRateController  (Kp, Ki, Kd, outputLimit, integralLimit);
@@ -168,7 +168,7 @@ void Drone::start() {
     m_orientationFilter.update(LOOPTIME_S);
     // debugPrint();
 
-  if (motorsAreActive()) {
+    if (motorsAreActive()) {
 
       rollControlInput  = pulseToRadiansPerSecondControlInput(ReceiverManager::rollAligned);
       pitchControlInput = pulseToRadiansPerSecondControlInput(ReceiverManager::pitchAligned);
@@ -199,9 +199,9 @@ void Drone::start() {
         pitchAngleController.reset();
       }
 
-      float32_t rollOutputPID  = 0;rollRotationalRateController.getOutput()  + rollAngleController.getOutput();
-      float32_t pitchOutputPID = 0;pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
-      float32_t yawOutputPID   = 0;yawRotationalRateController.getOutput();
+      float32_t rollOutputPID  = rollRotationalRateController.getOutput()  + rollAngleController.getOutput();
+      float32_t pitchOutputPID = pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
+      float32_t yawOutputPID   = yawRotationalRateController.getOutput();
 
       static constexpr float32_t smallChangeToKeepMotorsSpinning = 128;
       static constexpr float32_t throttleToKeepMotorsSpinning = THROTTLE_MAP_START + smallChangeToKeepMotorsSpinning;
