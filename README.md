@@ -10,10 +10,12 @@ latest schematic and PCB design found [HERE](https://easyeda.com/mc18g13/teensy-
 
 ## What you'll need to build this
 
+* Teensy 4
 * Drone body
 * IBus Receiver (Flysky fsa8s) and transmmitter (Flysky FS-i6X)
-* Teensy 4
 * 4 ESC's that support DSHOT
 * 4 Brushless Motors
 * 12v Battery and Power Distribution Board
 * MPU9250 MARG
+* 1.25 mm jst connectors
+* Power distribution board
