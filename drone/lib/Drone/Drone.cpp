@@ -50,7 +50,7 @@ void Drone::setup() {
 
   while(!m_receiverManager.isReceiving()) {
     delay(1000);
-    DEBUG_SERIAL.println(ReceiverManager::isReceiving());
+    DEBUG_SERIAL.print("Waiting for receiver to start");
   };
   
   m_timer = micros();
@@ -62,10 +62,11 @@ bool Drone::motorsAreActive() {
 
   float32_t lowerThrottleThreshold = THROTTLE_MAP_START +  0.05 * (THROTTLE_MAP_END - THROTTLE_MAP_START);
 
-  bool throttleLowerThanThreshold = m_receiverManager.getThrottle() < lowerThrottleThreshold;
-    // ReceiverManager::throttleAligned->getPulseLength(THROTTLE_MAP_START, 
-    //                                                  THROTTLE_MAP_MIDDLE, 
-    //                                                  THROTTLE_MAP_END) < lowerThrottleThreshold;
+  bool throttleLowerThanThreshold = 
+    m_receiverManager.getThrottleAligned(
+      THROTTLE_MAP_START, 
+      THROTTLE_MAP_MIDDLE,
+      THROTTLE_MAP_END) < lowerThrottleThreshold;
 
   bool armMotorsSwitchIsOn = m_receiverManager.getTopLeftSwitch() > MIDPOINT_FOR_RECEIVER_PULSE;
 
@@ -81,10 +82,11 @@ bool Drone::motorsAreActive() {
       const float32_t upperYawThreshold = 
         angularRateForControlRadiansStart +  0.96 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-      float32_t currentYawPulse = m_receiverManager.getYaw();
-      // ReceiverManager::yawAligned->getPulseLength(angularRateForControlRadiansStart, 
-      //                                                                         angularRateForControlRadiansMiddle, 
-      //                                                                         angularRateForControlRadiansEnd);
+      float32_t currentYawPulse =
+        m_receiverManager.getYawAligned(
+          angularRateForControlRadiansStart,
+          angularRateForControlRadiansMiddle,
+          angularRateForControlRadiansEnd);
 
       bool yawLowerThanThreshold = currentYawPulse <= lowerYawThreshold;
       bool yawAboveThreshold = currentYawPulse >= upperYawThreshold;
@@ -165,9 +167,9 @@ void Drone::start() {
 
     if (motorsAreActive()) {
 
-      rollControlInput  = pulseToRadiansPerSecondControlInput(m_receiverManager.getRoll());
-      pitchControlInput = pulseToRadiansPerSecondControlInput(m_receiverManager.getPitch());
-      yawControlInput   = pulseToRadiansPerSecondControlInput(m_receiverManager.getYaw());
+      rollControlInput  = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(ROLL_CHANNEL_INDEX));
+      pitchControlInput = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(PITCH_CHANNEL_INDEX));
+      yawControlInput   = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(YAW_CHANNEL_INDEX));
 
       if (rollControlInput  > angularRateForControlRadiansEnd) rollControlInput  = previousRollControlInput;
       if (pitchControlInput > angularRateForControlRadiansEnd) pitchControlInput = previousPitchControlInput;
@@ -201,8 +203,7 @@ void Drone::start() {
       static constexpr float32_t smallChangeToKeepMotorsSpinning = 128;
       static constexpr float32_t throttleToKeepMotorsSpinning = THROTTLE_MAP_START + smallChangeToKeepMotorsSpinning;
 
-      float32_t throttlePulse = m_receiverManager.getThrottle();
-        // ReceiverManager::throttleAligned->getPulseLength(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
+      float32_t throttlePulse = m_receiverManager.getThrottleAligned(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
 
       frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID + yawOutputPID;
       frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID - yawOutputPID;
@@ -268,8 +269,8 @@ void Drone::debugPrint() {
   }
 }
 
-float32_t Drone::pulseToRadiansPerSecondControlInput(ReceiverAligner* aligner) {
-  return aligner->getPulseLength(
+float32_t Drone::pulseToRadiansPerSecondControlInput(ChannelAligner* aligner) {
+  return aligner->getAlignedData(
     angularRateForControlRadiansStart, 
     angularRateForControlRadiansMiddle, 
     angularRateForControlRadiansEnd);
