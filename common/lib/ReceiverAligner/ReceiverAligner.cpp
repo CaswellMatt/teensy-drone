@@ -1,14 +1,17 @@
 #include "ReceiverAligner.h"
 #include "Math.h"
-ReceiverAligner::ReceiverAligner(
+ReceiverAligner::ReceiverAligner() {}
+
+void ReceiverAligner::initialise(
   ReceiverPulseTimer* receiverTimer,
   float32_t minValue,
   float32_t maxValue,
-  float32_t midValue) : 
-  m_timer(receiverTimer),
-  min(minValue),
-  max(maxValue),
-  mid(midValue) {};
+  float32_t midValue) {
+  m_timer = receiverTimer;
+  min = minValue;
+  max = maxValue;
+  mid = midValue; 
+}
 
 float32_t ReceiverAligner::getPulseLength(
   const float32_t& startMapped, 

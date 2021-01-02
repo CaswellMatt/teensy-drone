@@ -20,7 +20,7 @@ bool IBus::bufferHasEnoughDataForPacket() {
 
 bool IBus::canFindPacketInBuffer(void) {
   bool foundPacket = false;
-  /* search for the header for oldest header in fifo should be the most complete */
+  /* search for oldest header in fifo as it should be the most complete */
   for (uint8_t i = 0; i < IBUS_BUFFER_SIZE - 1; ++i) {
     if (m_rxBuffer[i] == PROTOCOL_LENGTH) {
       if (m_rxBuffer[i + 1] == COMMAND_HEADER) {
@@ -99,4 +99,8 @@ bool IBus::read(void) {
 
 uint16_t IBus::getChannelData(uint8_t channelId) {
   return m_channelData[channelId];
+}
+
+bool IBus::isReceiving() {
+  return Serial2.available();
 }

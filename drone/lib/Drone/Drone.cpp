@@ -29,9 +29,7 @@ Drone::Drone() :
   m_marg(ACCELERATION_FILTER_ON, GYRO_FILTER_ON),
   m_orientationFilter(&m_marg) {}  
 
-Drone::~Drone() {
-  ReceiverManager::destroyAligners();
-}
+Drone::~Drone() {}
 
 DShotMotorController m_motorController;
 
@@ -48,12 +46,9 @@ void Drone::setup() {
   #endif
 
   m_motorController.setup();
+  m_receiverManager.setup();
 
-
-  ReceiverManager::setupReceivers();
-  ReceiverManager::setupAligners();
-
-  while(!ReceiverManager::isReceiving()) {
+  while(!m_receiverManager.isReceiving()) {
     delay(1000);
     DEBUG_SERIAL.println(ReceiverManager::isReceiving());
   };
@@ -67,28 +62,29 @@ bool Drone::motorsAreActive() {
 
   float32_t lowerThrottleThreshold = THROTTLE_MAP_START +  0.05 * (THROTTLE_MAP_END - THROTTLE_MAP_START);
 
-  bool throttleLowerThanThreshold = 
-    ReceiverManager::throttleAligned->getPulseLength(THROTTLE_MAP_START, 
-                                                     THROTTLE_MAP_MIDDLE, 
-                                                     THROTTLE_MAP_END) < lowerThrottleThreshold;
+  bool throttleLowerThanThreshold = m_receiverManager.getThrottle() < lowerThrottleThreshold;
+    // ReceiverManager::throttleAligned->getPulseLength(THROTTLE_MAP_START, 
+    //                                                  THROTTLE_MAP_MIDDLE, 
+    //                                                  THROTTLE_MAP_END) < lowerThrottleThreshold;
 
-  bool armMotorsSwitchIsOn = ReceiverManager::topLeftSwitchInput.getPulseLengthMicros() > MIDPOINT_FOR_RECEIVER_PULSE;
+  bool armMotorsSwitchIsOn = m_receiverManager.getTopLeftSwitch() > MIDPOINT_FOR_RECEIVER_PULSE;
 
   if (armMotorsSwitchIsOn) {
     if (throttleLowerThanThreshold) {
       
-      float32_t lowerYawThreshold = 
+      const float32_t lowerYawThreshold = 
         angularRateForControlRadiansStart +  0.04 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-      float32_t middleYawThreshold = 
+      const float32_t middleYawThreshold = 
         angularRateForControlRadiansStart +  0.50 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-      float32_t upperYawThreshold = 
+      const float32_t upperYawThreshold = 
         angularRateForControlRadiansStart +  0.96 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-      float32_t currentYawPulse = ReceiverManager::yawAligned->getPulseLength(angularRateForControlRadiansStart, 
-                                                                              angularRateForControlRadiansMiddle, 
-                                                                              angularRateForControlRadiansEnd);
+      float32_t currentYawPulse = m_receiverManager.getYaw();
+      // ReceiverManager::yawAligned->getPulseLength(angularRateForControlRadiansStart, 
+      //                                                                         angularRateForControlRadiansMiddle, 
+      //                                                                         angularRateForControlRadiansEnd);
 
       bool yawLowerThanThreshold = currentYawPulse <= lowerYawThreshold;
       bool yawAboveThreshold = currentYawPulse >= upperYawThreshold;
@@ -112,9 +108,8 @@ bool Drone::motorsAreActive() {
         if (absoluteDifferenceBetweenYawAndCentrePulse < thresholdForComparison) {
           isActive = true;
           yawTriggerTripped = false;
-        } 
+        }
       }
-                                                    
     }
   } else {
     isActive = false;
@@ -170,9 +165,9 @@ void Drone::start() {
 
     if (motorsAreActive()) {
 
-      rollControlInput  = pulseToRadiansPerSecondControlInput(ReceiverManager::rollAligned);
-      pitchControlInput = pulseToRadiansPerSecondControlInput(ReceiverManager::pitchAligned);
-      yawControlInput   = pulseToRadiansPerSecondControlInput(ReceiverManager::yawAligned);
+      rollControlInput  = pulseToRadiansPerSecondControlInput(m_receiverManager.getRoll());
+      pitchControlInput = pulseToRadiansPerSecondControlInput(m_receiverManager.getPitch());
+      yawControlInput   = pulseToRadiansPerSecondControlInput(m_receiverManager.getYaw());
 
       if (rollControlInput  > angularRateForControlRadiansEnd) rollControlInput  = previousRollControlInput;
       if (pitchControlInput > angularRateForControlRadiansEnd) pitchControlInput = previousPitchControlInput;
@@ -190,7 +185,7 @@ void Drone::start() {
       pitchRotationalRateController.update(pitchControlInput, pitchRatePositiveNoseDown);
       yawRotationalRateController.update(yawControlInput    , yawRatePositiveNoseLeft);
       
-      bool shouldAutoLevel = ReceiverManager::topRightSwitchInput.getPulseLengthMicros() < MIDPOINT_FOR_RECEIVER_PULSE;
+      bool shouldAutoLevel = m_receiverManager.getTopRightSwitch() < MIDPOINT_FOR_RECEIVER_PULSE;
       if (shouldAutoLevel) {
         rollAngleController.update(0, m_orientationFilter.getRoll());
         pitchAngleController.update(0, m_orientationFilter.getPitch());
@@ -206,8 +201,8 @@ void Drone::start() {
       static constexpr float32_t smallChangeToKeepMotorsSpinning = 128;
       static constexpr float32_t throttleToKeepMotorsSpinning = THROTTLE_MAP_START + smallChangeToKeepMotorsSpinning;
 
-      float32_t throttlePulse = 
-        ReceiverManager::throttleAligned->getPulseLength(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
+      float32_t throttlePulse = m_receiverManager.getThrottle();
+        // ReceiverManager::throttleAligned->getPulseLength(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
 
       frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID + yawOutputPID;
       frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID - yawOutputPID;

@@ -9,6 +9,10 @@
 #define IBUS_BUFFER_SIZE 2 * SIZE_OF_IBUS_PACKET_BYTES
 #define CHANNEL_COUNT 14
 
+/**
+ *  IBus uses uart and this implementation uses serial 2 on the teensy 4
+ *  Serial 2 RX is pin 7
+ */
 
 class IBus {
 private:
@@ -20,6 +24,7 @@ public:
   void setup(void);
   bool read(void);
   uint16_t getChannelData(uint8_t channelId);
+  bool isReceiving();
 
 private:
   bool bufferHasEnoughDataForPacket(void);

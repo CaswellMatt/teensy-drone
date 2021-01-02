@@ -14,7 +14,9 @@ private:
   float32_t mid;
 
 public:
-  ReceiverAligner(
+  ReceiverAligner();
+
+  void initialise(
     ReceiverPulseTimer* receiverTimer,
     float32_t minValue,
     float32_t maxValue,

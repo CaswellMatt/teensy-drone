@@ -1,9 +1,9 @@
-#ifndef IRECEIVER_CHANNEL
-#define IRECEIVER_CHANNEl
+#ifndef I_RECEIVER_CHANNEL
+#define I_RECEIVER_CHANNEL
 
 class IReceiverChannel {
 public:
-  virtual getChannelData() = 0;
+  virtual uint16_t getData() = 0;
 };
 
 #endif

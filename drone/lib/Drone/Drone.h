@@ -7,6 +7,7 @@
 #include "OrientationFilter.h"
 // #include "MotorControlManager.h"
 #include "ReceiverAligner.h"
+#include "ReceiverManager.h"
 
 class Drone {
 public:
@@ -19,6 +20,7 @@ public:
 private:
   MARG m_marg;
   OrientationFilter m_orientationFilter;
+  ReceiverManager m_receiverManager;
   long m_timer;
 
   bool motorsAreActive();
