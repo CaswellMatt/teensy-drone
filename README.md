@@ -4,9 +4,9 @@ Teensy Flight Controller, Teensy 4 with platformio using vscode.
 
 latest schematic and PCB design found [HERE](https://easyeda.com/mc18g13/teensy-drone)
 
-![alt text](https://image.easyeda.com/histories/54603217d50b49fdaa67c02c5153cf47.png "Schematic")
+![](https://image.easyeda.com/histories/edefd86112da491591a4318cc101e628.png)
 
-![alt text](https://image.easyeda.com/histories/9791de37978c451e956010ea456edfc5.png "PCB")
+![](https://image.easyeda.com/histories/5178226b8f9e4a0181dd57564860cdf3.png)
 
 ## What you'll need to build this
 
