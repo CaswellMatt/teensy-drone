@@ -102,5 +102,12 @@ uint16_t IBus::getChannelData(uint8_t channelId) {
 }
 
 bool IBus::isReceiving() {
-  return Serial2.available();
+  return read();
+}
+
+void IBus::printAllChannels() {
+  for (uint16_t i = 0; i < CHANNEL_COUNT; i++) {
+    Serial.print(m_channelData[i]);Serial.print(" ");
+  }
+  Serial.println();
 }

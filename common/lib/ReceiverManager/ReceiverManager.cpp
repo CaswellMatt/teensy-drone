@@ -24,7 +24,6 @@ void ReceiverManager::setupAligners() {
   m_aligners[THROTTLE_CHANNEL_INDEX] = &m_throttleAligner;
   m_aligners[YAW_CHANNEL_INDEX]      = &m_yawAligner;
 
-
   m_rollAligner.setup(&m_rollChannel, ROLL_START);	
   m_pitchAligner.setup(&m_pitchChannel, PITCH_START);
   m_throttleAligner.setup(&m_throttleChannel, THROTTLE_START);
@@ -33,6 +32,8 @@ void ReceiverManager::setupAligners() {
 }
 
 void ReceiverManager::setup() {
+  m_iBus.setup();
+
   m_channels[ROLL_CHANNEL_INDEX]     = &m_rollChannel;
   m_channels[PITCH_CHANNEL_INDEX]    = &m_pitchChannel;
   m_channels[THROTTLE_CHANNEL_INDEX] = &m_throttleChannel;
@@ -40,7 +41,10 @@ void ReceiverManager::setup() {
   m_channels[TOP_LEFT_SWITCH_INDEX]  = &m_topLeftSwitchChannel;
   m_channels[TOP_RIGHT_SWITCH_INDEX] = &m_topRightSwitchChannel;
 
-  setupAligners();
+}
+
+bool ReceiverManager::read() {
+  return m_iBus.read();
 }
 
 uint16_t ReceiverManager::getRoll() {
@@ -67,28 +71,28 @@ uint16_t ReceiverManager::getTopRightSwitch() {
   return m_channels[TOP_RIGHT_SWITCH_INDEX]->getData();
 }
 
-uint16_t ReceiverManager::getRollAligned(    
+float32_t ReceiverManager::getRollAligned(    
   const float32_t startMapped,
   const float32_t midMapped,
   const float32_t endMapped) {
   return m_rollAligner.getAlignedData(startMapped, midMapped, endMapped);
 }
 
-uint16_t ReceiverManager::getPitchAligned(
+float32_t ReceiverManager::getPitchAligned(
   const float32_t startMapped,
   const float32_t midMapped,
   const float32_t endMapped) {
   return m_pitchAligner.getAlignedData(startMapped, midMapped, endMapped);
 }
 
-uint16_t ReceiverManager::getThrottleAligned(
+float32_t ReceiverManager::getThrottleAligned(
   const float32_t startMapped,
   const float32_t midMapped,
   const float32_t endMapped) {
   return m_throttleAligner.getAlignedData(startMapped, midMapped, endMapped);
 }
 
-uint16_t ReceiverManager::getYawAligned(
+float32_t ReceiverManager::getYawAligned(
   const float32_t startMapped,
   const float32_t midMapped,
   const float32_t endMapped) {
@@ -101,4 +105,12 @@ bool ReceiverManager::isReceiving() {
 
 ChannelAligner* ReceiverManager::getAligner(uint8_t alignerIndex) {
   return m_aligners[alignerIndex];
+}
+
+IReceiverChannel* ReceiverManager::getChannel(uint8_t channelIndex) {
+  return m_channels[channelIndex];
+}
+
+void ReceiverManager::printAllChannels() {
+  m_iBus.printAllChannels();
 }

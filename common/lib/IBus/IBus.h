@@ -25,6 +25,7 @@ public:
   bool read(void);
   uint16_t getChannelData(uint8_t channelId);
   bool isReceiving();
+  void printAllChannels();
 
 private:
   bool bufferHasEnoughDataForPacket(void);

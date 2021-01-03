@@ -47,10 +47,11 @@ void Drone::setup() {
 
   m_motorController.setup();
   m_receiverManager.setup();
+  m_receiverManager.setupAligners();
 
   while(!m_receiverManager.isReceiving()) {
+    DEBUG_SERIAL.println("Waiting for receiver to start");
     delay(1000);
-    DEBUG_SERIAL.print("Waiting for receiver to start");
   };
   
   m_timer = micros();
@@ -60,16 +61,14 @@ bool Drone::motorsAreActive() {
   static bool isActive = false;
   static bool yawTriggerTripped = false;
 
-  float32_t lowerThrottleThreshold = THROTTLE_MAP_START +  0.05 * (THROTTLE_MAP_END - THROTTLE_MAP_START);
+  float32_t lowerThrottleThreshold = THROTTLE_MAP_START + 0.05 * (THROTTLE_MAP_END - THROTTLE_MAP_START);
 
   bool throttleLowerThanThreshold = 
     m_receiverManager.getThrottleAligned(
       THROTTLE_MAP_START, 
       THROTTLE_MAP_MIDDLE,
       THROTTLE_MAP_END) < lowerThrottleThreshold;
-
   bool armMotorsSwitchIsOn = m_receiverManager.getTopLeftSwitch() > MIDPOINT_FOR_RECEIVER_PULSE;
-
   if (armMotorsSwitchIsOn) {
     if (throttleLowerThanThreshold) {
       
@@ -82,14 +81,14 @@ bool Drone::motorsAreActive() {
       const float32_t upperYawThreshold = 
         angularRateForControlRadiansStart +  0.96 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-      float32_t currentYawPulse =
+      float32_t currentYaw = // m_receiverManager.getYaw();
         m_receiverManager.getYawAligned(
           angularRateForControlRadiansStart,
           angularRateForControlRadiansMiddle,
           angularRateForControlRadiansEnd);
-
-      bool yawLowerThanThreshold = currentYawPulse <= lowerYawThreshold;
-      bool yawAboveThreshold = currentYawPulse >= upperYawThreshold;
+      Serial.println(currentYaw, 4);
+      bool yawLowerThanThreshold = currentYaw <= lowerYawThreshold;
+      bool yawAboveThreshold = currentYaw >= upperYawThreshold;
       if (yawLowerThanThreshold) {
         yawTriggerTripped = true;
       } else if (yawAboveThreshold) {
@@ -98,7 +97,7 @@ bool Drone::motorsAreActive() {
 
 
       if (yawTriggerTripped) {
-        float32_t differenceBetweenYawAndCentrePulse = currentYawPulse - middleYawThreshold;
+        float32_t differenceBetweenYawAndCentrePulse = currentYaw - middleYawThreshold;
         float32_t absoluteDifferenceBetweenYawAndCentrePulse;
         arm_abs_f32(
           &differenceBetweenYawAndCentrePulse, 
@@ -162,70 +161,86 @@ void Drone::start() {
 
   while(1) {
 
-    m_orientationFilter.update(LOOPTIME_S);
-    // debugPrint();
+    if (m_receiverManager.read()) {
+      m_orientationFilter.update(LOOPTIME_S);
+      // debugPrint();
 
-    if (motorsAreActive()) {
+      if (motorsAreActive()) {
 
-      rollControlInput  = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(ROLL_CHANNEL_INDEX));
-      pitchControlInput = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(PITCH_CHANNEL_INDEX));
-      yawControlInput   = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(YAW_CHANNEL_INDEX));
+        Serial.println("motors are active");
 
-      if (rollControlInput  > angularRateForControlRadiansEnd) rollControlInput  = previousRollControlInput;
-      if (pitchControlInput > angularRateForControlRadiansEnd) pitchControlInput = previousPitchControlInput;
-      if (yawControlInput   > angularRateForControlRadiansEnd) yawControlInput   = previousYawControlInput;
+        rollControlInput  = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(ROLL_CHANNEL_INDEX));
+        pitchControlInput = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(PITCH_CHANNEL_INDEX));
+        yawControlInput   = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(YAW_CHANNEL_INDEX));
 
-      previousRollControlInput  = rollControlInput;
-      previousPitchControlInput = pitchControlInput;
-      previousYawControlInput   = yawControlInput;
+        if (rollControlInput  > angularRateForControlRadiansEnd) rollControlInput  = previousRollControlInput;
+        if (pitchControlInput > angularRateForControlRadiansEnd) pitchControlInput = previousPitchControlInput;
+        if (yawControlInput   > angularRateForControlRadiansEnd) yawControlInput   = previousYawControlInput;
 
-      float32_t rollRatePositiveRightSideDown = m_marg.getRotationalRates().v0;
-      float32_t pitchRatePositiveNoseDown     = m_marg.getRotationalRates().v1;
-      float32_t yawRatePositiveNoseLeft       = m_marg.getRotationalRates().v2;
+        previousRollControlInput  = rollControlInput;
+        previousPitchControlInput = pitchControlInput;
+        previousYawControlInput   = yawControlInput;
 
-      rollRotationalRateController.update(rollControlInput  , rollRatePositiveRightSideDown);
-      pitchRotationalRateController.update(pitchControlInput, pitchRatePositiveNoseDown);
-      yawRotationalRateController.update(yawControlInput    , yawRatePositiveNoseLeft);
-      
-      bool shouldAutoLevel = m_receiverManager.getTopRightSwitch() < MIDPOINT_FOR_RECEIVER_PULSE;
-      if (shouldAutoLevel) {
-        rollAngleController.update(0, m_orientationFilter.getRoll());
-        pitchAngleController.update(0, m_orientationFilter.getPitch());
+        float32_t rollRatePositiveRightSideDown = m_marg.getRotationalRates().v0;
+        float32_t pitchRatePositiveNoseDown     = m_marg.getRotationalRates().v1;
+        float32_t yawRatePositiveNoseLeft       = m_marg.getRotationalRates().v2;
+
+        rollRotationalRateController.update(rollControlInput  , rollRatePositiveRightSideDown);
+        pitchRotationalRateController.update(pitchControlInput, pitchRatePositiveNoseDown);
+        yawRotationalRateController.update(yawControlInput    , yawRatePositiveNoseLeft);
+        
+        bool shouldAutoLevel = m_receiverManager.getTopRightSwitch() < MIDPOINT_FOR_RECEIVER_PULSE;
+        if (shouldAutoLevel) {
+          rollAngleController.update(0, m_orientationFilter.getRoll());
+          pitchAngleController.update(0, m_orientationFilter.getPitch());
+        } else {
+          rollAngleController.reset();
+          pitchAngleController.reset();
+        }
+
+        float32_t rollOutputPID  = rollRotationalRateController.getOutput()  + rollAngleController.getOutput();
+        float32_t pitchOutputPID = pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
+        float32_t yawOutputPID   = yawRotationalRateController.getOutput();
+
+        static constexpr float32_t smallChangeToKeepMotorsSpinning = 128;
+        static constexpr float32_t throttleToKeepMotorsSpinning = THROTTLE_MAP_START + smallChangeToKeepMotorsSpinning;
+
+        float32_t throttlePulse = m_receiverManager.getThrottleAligned(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
+
+        frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID + yawOutputPID;
+        frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID - yawOutputPID;
+        backLeftPulse   = throttlePulse + rollOutputPID + pitchOutputPID - yawOutputPID;
+        backRightPulse  = throttlePulse - rollOutputPID + pitchOutputPID + yawOutputPID;
+
+        auto checkMinMaxOfPulse = [](float32_t& pulse) {
+          float32_t min = THROTTLE_MAP_START;
+          if (pulse < min) {
+            pulse = min;
+          } else if (pulse > THROTTLE_MAP_END) {
+            pulse = THROTTLE_MAP_END;
+          }
+        };
+
+        checkMinMaxOfPulse(frontLeftPulse);
+        checkMinMaxOfPulse(frontRightPulse);
+        checkMinMaxOfPulse(backLeftPulse);
+        checkMinMaxOfPulse(backRightPulse);
+
       } else {
+
+        rollRotationalRateController.reset();
+        pitchRotationalRateController.reset();
+        yawRotationalRateController.reset();
+
         rollAngleController.reset();
         pitchAngleController.reset();
+
+        frontLeftPulse  = THROTTLE_MAP_START;
+        frontRightPulse = THROTTLE_MAP_START;
+        backLeftPulse   = THROTTLE_MAP_START;
+        backRightPulse  = THROTTLE_MAP_START;
       }
-
-      float32_t rollOutputPID  = rollRotationalRateController.getOutput()  + rollAngleController.getOutput();
-      float32_t pitchOutputPID = pitchRotationalRateController.getOutput() + pitchAngleController.getOutput();
-      float32_t yawOutputPID   = yawRotationalRateController.getOutput();
-
-      static constexpr float32_t smallChangeToKeepMotorsSpinning = 128;
-      static constexpr float32_t throttleToKeepMotorsSpinning = THROTTLE_MAP_START + smallChangeToKeepMotorsSpinning;
-
-      float32_t throttlePulse = m_receiverManager.getThrottleAligned(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
-
-      frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID + yawOutputPID;
-      frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID - yawOutputPID;
-      backLeftPulse   = throttlePulse + rollOutputPID + pitchOutputPID - yawOutputPID;
-      backRightPulse  = throttlePulse - rollOutputPID + pitchOutputPID + yawOutputPID;
-
-      auto checkMinMaxOfPulse = [](float32_t& pulse) {
-        float32_t min = THROTTLE_MAP_START;
-        if (pulse < min) {
-          pulse = min;
-        } else if (pulse > THROTTLE_MAP_END) {
-          pulse = THROTTLE_MAP_END;
-        }
-      };
-
-      checkMinMaxOfPulse(frontLeftPulse);
-      checkMinMaxOfPulse(frontRightPulse);
-      checkMinMaxOfPulse(backLeftPulse);
-      checkMinMaxOfPulse(backRightPulse);
-
     } else {
-
       rollRotationalRateController.reset();
       pitchRotationalRateController.reset();
       yawRotationalRateController.reset();
@@ -254,16 +269,22 @@ void Drone::debugPrint() {
     // DEBUG_SERIAL.print(m_orientationFilter.getPitch(),5); DEBUG_SERIAL.print(" ");
     // DEBUG_SERIAL.print(m_orientationFilter.getRoll(),5); DEBUG_SERIAL.print(" ");
 
-    Serial.print(m_marg.getRotationalRates().v0,5); DEBUG_SERIAL.print(" ");
-    Serial.print(m_marg.getRotationalRates().v1,5); DEBUG_SERIAL.print(" ");
-    Serial.print(m_marg.getRotationalRates().v2,5); DEBUG_SERIAL.print(" ");
+    // Serial.print(m_marg.getRotationalRates().v0,5); DEBUG_SERIAL.print(" ");
+    // Serial.print(m_marg.getRotationalRates().v1,5); DEBUG_SERIAL.print(" ");
+    // Serial.print(m_marg.getRotationalRates().v2,5); DEBUG_SERIAL.print(" ");
 
-    Serial.print(m_marg.getAcceleration().v0,5); DEBUG_SERIAL.print(" ");
-    Serial.print(m_marg.getAcceleration().v1,5); DEBUG_SERIAL.print(" ");
-    Serial.print(m_marg.getAcceleration().v2,5); DEBUG_SERIAL.print(" ");
+    // Serial.print(m_marg.getAcceleration().v0,5); DEBUG_SERIAL.print(" ");
+    // Serial.print(m_marg.getAcceleration().v1,5); DEBUG_SERIAL.print(" ");
+    // Serial.print(m_marg.getAcceleration().v2,5); DEBUG_SERIAL.print(" ");
 
     // DEBUG_SERIAL.print(pitchAngleController.getDerivative(),5); DEBUG_SERIAL.print(" ");
     // DEBUG_SERIAL.print(pitchAngleController.getProportional(),5); DEBUG_SERIAL.print(" ");
+
+    DEBUG_SERIAL.print((uint16_t)m_receiverManager.getRoll()); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(m_receiverManager.getPitch()); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(m_receiverManager.getYaw()); DEBUG_SERIAL.print(" ");
+
+
 
     DEBUG_SERIAL.println();
   }

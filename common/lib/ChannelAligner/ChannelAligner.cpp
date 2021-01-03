@@ -42,7 +42,8 @@ float32_t ChannelAligner::getAlignedData(
   const float32_t midMapped,
   const float32_t endMapped) {
 
-  uint16_t channelData = m_receiverChannel->getData();
+  float32_t channelData = (float32_t)m_receiverChannel->getData();
+
   float32_t data = channelData < m_mid ?
     Math::mapfloat(channelData, m_min, m_mid, startMapped, midMapped) :
     Math::mapfloat(channelData, m_mid, m_max, midMapped, endMapped);

@@ -2,14 +2,9 @@
 #include <Arduino.h>
 #include "ReceiverManager.h"
 
-#include <arm_math.h>
+ReceiverManager receiverManager;
 
-#define ROLL_INDEX           1
-#define PITCH_INDEX          2
-#define THROTTLE_INDEX       3
-#define YAW_INDEX            4
-#define PRINT_INDEX          5
-#define PRINT_SAVED_INDEX    6
+#include <arm_math.h>
 
 const String rollOptionText = "Calibrate Roll";
 const String pitchOptionText = "Calibrate Pitch";
@@ -28,6 +23,10 @@ void ReceiverCalibrationHandler::printTitle() {
 
 void ReceiverCalibrationHandler::setup() {
 
+  receiverManager.setup();
+
+  while (!receiverManager.isReceiving());
+
   addExit(this);
 
   addOption(this, &ReceiverCalibrationHandler::rollCalibrator    , rollOptionText);
@@ -37,7 +36,6 @@ void ReceiverCalibrationHandler::setup() {
   addOption(this, &ReceiverCalibrationHandler::printAll          , printOptionText);
   addOption(this, &ReceiverCalibrationHandler::printSaved        , printSavedValuesText);
 
-  ReceiverManager::setupReceivers();
 }
 
 void ReceiverCalibrationHandler::printReceiver(String receiverName, int startAddress) {
@@ -64,20 +62,21 @@ void ReceiverCalibrationHandler::printReceiver(String receiverName, int startAdd
 
 const int RECEIVER_PULSE_COUNT_TO_AVERAGE = 100;
 
-void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, int eepromStartAddress) {
+void ReceiverCalibrationHandler::calibrateReceiver(IReceiverChannel* channel, int eepromStartAddress) {
   DEBUG_SERIAL.println("Lets collect the max for this receiver channel");
   DEBUG_SERIAL.println("Move the stick to the max position");
   delay(5000);
 
-  auto getAveragePulseLengthForThisTimer = [](const ReceiverPulseTimer& timer, int size) {
-    long sumOfPulse = 0;
+  auto getAveragePulseLengthForThisTimer = [](const IReceiverChannel& channel, int size) {
+    long sumOf = 0;
 
     for (int i = 0; i < size; ++i) {
-      sumOfPulse += timer.getPulseLengthMicros();
+      while (!receiverManager.read());
+      sumOf += channel.getData();
       delay(2);
     }
 
-    float32_t averagePulseLengthMax = static_cast<float32_t>(sumOfPulse / size);
+    float32_t averagePulseLengthMax = static_cast<float32_t>(sumOf / size);
 
     return averagePulseLengthMax;
   };
@@ -85,7 +84,7 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   int eeAddress = eepromStartAddress;
 
   DEBUG_SERIAL.println(eeAddress);
-  float32_t max = getAveragePulseLengthForThisTimer(*timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
+  float32_t max = getAveragePulseLengthForThisTimer(*channel, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   EEPROM.put(eeAddress, max);
   DEBUG_SERIAL.println("done");
   DEBUG_SERIAL.print("Max = ");DEBUG_SERIAL.println(max);
@@ -96,7 +95,7 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   DEBUG_SERIAL.println("Move the stick to the min position");
   delay(5000);
 
-  float32_t min = getAveragePulseLengthForThisTimer(*timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
+  float32_t min = getAveragePulseLengthForThisTimer(*channel, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   eeAddress += sizeof(float32_t);
   DEBUG_SERIAL.println(eeAddress);
   EEPROM.put(eeAddress, min);
@@ -109,7 +108,7 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
   DEBUG_SERIAL.println("Move the stick to the centre position");
   delay(5000);
 
-  float32_t mid = getAveragePulseLengthForThisTimer(*timer, RECEIVER_PULSE_COUNT_TO_AVERAGE);
+  float32_t mid = getAveragePulseLengthForThisTimer(*channel, RECEIVER_PULSE_COUNT_TO_AVERAGE);
   eeAddress += sizeof(float32_t);
   DEBUG_SERIAL.println(eeAddress);
   EEPROM.put(eeAddress, mid);
@@ -120,14 +119,15 @@ void ReceiverCalibrationHandler::calibrateReceiver(ReceiverPulseTimer* timer, in
 
 };
 
-void ReceiverCalibrationHandler::rollCalibrator() { calibrateReceiver(&ReceiverManager::rollInput, ROLL_START); };
-void ReceiverCalibrationHandler::pitchCalibrator() { calibrateReceiver(&ReceiverManager::pitchInput, PITCH_START); };
-void ReceiverCalibrationHandler::yawCalibrator() { calibrateReceiver(&ReceiverManager::yawInput, YAW_START); };
-void ReceiverCalibrationHandler::throttleCalibrator() { calibrateReceiver(&ReceiverManager::throttleInput, THROTTLE_START); };
+void ReceiverCalibrationHandler::rollCalibrator() { calibrateReceiver(receiverManager.getChannel(ROLL_CHANNEL_INDEX), ROLL_START); };
+void ReceiverCalibrationHandler::pitchCalibrator() { calibrateReceiver(receiverManager.getChannel(PITCH_CHANNEL_INDEX), PITCH_START); };
+void ReceiverCalibrationHandler::yawCalibrator() { calibrateReceiver(receiverManager.getChannel(YAW_CHANNEL_INDEX), YAW_START); };
+void ReceiverCalibrationHandler::throttleCalibrator() { calibrateReceiver(receiverManager.getChannel(THROTTLE_CHANNEL_INDEX), THROTTLE_START); };
 
 void ReceiverCalibrationHandler::printAll() { 
   for (int i = 0; i < 1000; ++i) {
-    ReceiverManager::printAllPulseLengths();
+    receiverManager.read();
+    receiverManager.printAllChannels();
     DEBUG_SERIAL.println();
   }
 };

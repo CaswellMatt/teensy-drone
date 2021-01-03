@@ -3,7 +3,7 @@
 
 #include <arm_math.h>
 #include "MenuOptionHandler.h"
-#include "ReceiverPulseTimer.h"
+#include "IReceiverChannel.h"
 
 class ReceiverCalibrationHandler : public MenuOptionHandler {
 public:
@@ -12,7 +12,7 @@ public:
   virtual void setup() override;
   virtual void printTitle() override;
 
-  void calibrateReceiver(ReceiverPulseTimer* timer, int eepromStartAddress);
+  void calibrateReceiver(IReceiverChannel* channel, int eepromStartAddress);
   void printReceiver(String receiverName, int startAddress);
 
   void rollCalibrator();

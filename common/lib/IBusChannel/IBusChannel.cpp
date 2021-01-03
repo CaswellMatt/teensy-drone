@@ -13,3 +13,7 @@ IBusChannel::IBusChannel() {
 uint16_t IBusChannel::getData() {
   return m_iBus->getChannelData(m_channelId);
 }
+
+uint8_t IBusChannel::getId() {
+  return m_channelId;
+}

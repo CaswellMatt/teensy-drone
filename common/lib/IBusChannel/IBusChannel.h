@@ -14,6 +14,7 @@ public:
   IBusChannel(IBus* ibus, uint8_t channelId);
 
   virtual uint16_t getData() override;
+  virtual uint8_t getId() override;
 };
 
 #endif
