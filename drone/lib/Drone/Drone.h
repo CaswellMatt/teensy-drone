@@ -6,7 +6,8 @@
 #include "Quaternion.h"
 #include "OrientationFilter.h"
 // #include "MotorControlManager.h"
-#include "ReceiverAligner.h"
+#include "ChannelAligner.h"
+#include "ReceiverManager.h"
 
 class Drone {
 public:
@@ -19,11 +20,12 @@ public:
 private:
   MARG m_marg;
   OrientationFilter m_orientationFilter;
+  ReceiverManager m_receiverManager;
   long m_timer;
 
   bool motorsAreActive();
   void debugPrint();
-  float32_t pulseToRadiansPerSecondControlInput(ReceiverAligner* aligner);
+  float32_t pulseToRadiansPerSecondControlInput(ChannelAligner* aligner);
 };
 
 

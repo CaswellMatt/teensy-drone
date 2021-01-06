@@ -3,16 +3,16 @@
 GyroscopeFilter::GyroscopeFilter() {
   const int filterSize = 7;
 
-  m_inputCoefficientsBNotchFilter90hz = new float32_t[filterSize] {
-    0.90775,	-4.6384,	10.62126,	-13.75821,	10.62126,	-4.6384,	0.90775,
+  m_inputCoefficientsBNotchFilter60hz = new float32_t[filterSize] {
+    0.80285,	-4.50637,	10.83703,	-14.26563,	10.83703,	-4.50637,	0.80285,
   };
 
-  m_outputCoefficientsANotchFilter90hz = new float32_t[filterSize] {
-    1,	-4.94827,	10.9688,	-13.75039,	10.26914,	-4.33633,	0.82009,
+  m_outputCoefficientsANotchFilter60hz = new float32_t[filterSize] {
+    1,	-5.21716,	11.64907,	-14.22139,	10.00145,	-3.83982,	0.62922,
   };
 
-  m_ellipticalFilterNotchFilter90hz     
-    = new IIRFilter(m_inputCoefficientsBNotchFilter90hz, m_outputCoefficientsANotchFilter90hz, filterSize);
+  m_ellipticalFilterNotchFilter60hz     
+    = new IIRFilter(m_inputCoefficientsBNotchFilter60hz, m_outputCoefficientsANotchFilter60hz, filterSize);
 
   m_inputCoefficientsBNotchFilter265hz = new float32_t[filterSize] {
     0.78801,	0.26142,	2.3923,	0.52384,	2.3923,	0.26142,	0.78801,
@@ -42,24 +42,24 @@ GyroscopeFilter::GyroscopeFilter() {
 }
 
 GyroscopeFilter::~GyroscopeFilter() {
-  delete m_inputCoefficientsBNotchFilter90hz;
-  delete m_outputCoefficientsANotchFilter90hz;
+  delete m_inputCoefficientsBNotchFilter60hz;
+  delete m_outputCoefficientsANotchFilter60hz;
 
   delete m_inputCoefficientsBNotchFilter265hz;
   delete m_outputCoefficientsANotchFilter265hz;
 
-  delete m_ellipticalFilterNotchFilter90hz;
+  delete m_ellipticalFilterNotchFilter60hz;
   delete m_ellipticalFilterNotchFilter265hz;
 }
 
 float32_t GyroscopeFilter::get() {
-  return m_ellipticalFilterNotchFilter265hz->getCurrent();
+  return m_ellipticalFilterNotchFilter60hz->getCurrent();
 }
 
 void GyroscopeFilter::update(float32_t input) {
-  m_ellipticalFilterNotchFilter90hz->update(input);
-  m_ellipticalFilterNotchFilter265hz->update(
-    m_ellipticalFilterNotchFilter90hz->getCurrent());
+  m_ellipticalFilterNotchFilter60hz->update(input);
+  // m_ellipticalFilterNotchFilter265hz->update(
+  //   m_ellipticalFilterNotchFilter60hz->getCurrent());
 }
 
 float32_t GyroscopeFilter::getLow() {

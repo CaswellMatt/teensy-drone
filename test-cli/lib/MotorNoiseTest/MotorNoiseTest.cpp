@@ -23,7 +23,7 @@ void MotorNoiseTest::setup() {
 
   const int singleMotorTestCount = 1;
 
-  Vector (MARG::*sensor)() = &MARG::getRotationalRates;
+  Vector (MARG::*sensor)() = &MARG::getRotationalRatesRaw;
 
   // auto backLeftMotorFunctionCall = [this, sensor]() { 
   //   runTestOnMotors(&MotorControlManager::backLeft, singleMotorTestCount, sensor); 
@@ -65,6 +65,8 @@ void MotorNoiseTest::printTitle() {
 }
 
 void MotorNoiseTest::runTestOnMotors(Vector (MARG::*sensor)()) {
+  m_motorController.setup();
+
   const uint32_t BUFFER_SIZE = 2048;
 
   const uint32_t fftSize = BUFFER_SIZE/2;
@@ -82,15 +84,32 @@ void MotorNoiseTest::runTestOnMotors(Vector (MARG::*sensor)()) {
 
   bool exit = false;
 
-  const int signalSetPoint = 250;
+  const int signalSetPoint = THROTTLE_MAP_END;
 
   int iterationCount = 0;
-  
-  for (int i = 0; i < 1000; ++i) {
-    while(micros() - timer < LOOPTIME_US);
-    timer = micros();
-    m_motorController.setSpeed(THROTTLE_MAP_START, THROTTLE_MAP_START, THROTTLE_MAP_START, THROTTLE_MAP_START);
-  }
+  constexpr int loopSize = 10000;
+  constexpr float32_t startSpeed = 200;
+
+  auto speedUpMotors = [&]() {
+    for (int i = 0; i < loopSize; ++i) {
+      while(micros() - timer < LOOPTIME_US);
+      timer = micros();
+      int motorSpeed = i*startSpeed/loopSize;
+      m_motorController.setSpeed(motorSpeed, motorSpeed, motorSpeed, motorSpeed);
+    }
+  };
+
+  auto slowDownMotors = [&]() {
+    for (int i = loopSize; i > 0; --i) {
+      while(micros() - timer < LOOPTIME_US);
+      timer = micros();
+      int motorSpeed = i*startSpeed/loopSize;
+      m_motorController.setSpeed(motorSpeed, motorSpeed, motorSpeed, motorSpeed);
+    }
+  };
+
+  speedUpMotors();
+  slowDownMotors();
 
   while(!exit) {
     while(micros() - timer < LOOPTIME_US);
@@ -98,9 +117,9 @@ void MotorNoiseTest::runTestOnMotors(Vector (MARG::*sensor)()) {
     m_marg->read();
 
     m_motorController.setSpeed(m_speed, m_speed, m_speed, m_speed);
-  
-    m_marg->read();
-    if (m_speed >= signalSetPoint && iterationCount > 6000) {
+
+    bool speedIsAtSetpointAndIterationCountIsHighEnough = m_speed >= signalSetPoint && iterationCount > 15000;
+    if (speedIsAtSetpointAndIterationCountIsHighEnough) {
       // buffer[bufferIndex] = sin(2 * PI * 20 * (bufferIndex/2) / fftSize); // frequence peak at 20hz for checking fft
       bufferX[bufferIndex] = (m_marg->*sensor)().v0;
       bufferY[bufferIndex] = (m_marg->*sensor)().v1;
@@ -113,10 +132,10 @@ void MotorNoiseTest::runTestOnMotors(Vector (MARG::*sensor)()) {
       bufferIndex+=2;
 
     } else if (m_speed < signalSetPoint) {
-      increment *= 1.0005;
+      increment *= 1.001;
       m_speed += direction*increment;
     }
-    
+
     iterationCount++;
 
     if (bufferIndex == BUFFER_SIZE) exit = true;
@@ -158,19 +177,19 @@ void MotorNoiseTest::runTestOnMotors(Vector (MARG::*sensor)()) {
   calculateFFT(bufferY, fftComplexInstance, srcY, destY);
   calculateFFT(bufferZ, fftComplexInstance, srcZ, destZ);
 
-  DEBUG_SERIAL.print("fftOutputX rawX");
-  DEBUG_SERIAL.print(" fftOutputY rawY");
-  DEBUG_SERIAL.println(" fftOutputZ rawZ");
+  DEBUG_SERIAL.print("rawX rawY rawZ ");
+  DEBUG_SERIAL.print("fftOutputX fftOutputY fftOutputZ ");
+  DEBUG_SERIAL.println("");
   uint32_t halfFFT = static_cast<uint32_t>(fftSize/2);
   for (uint32_t i = 0; i < halfFFT; i++) {   
     int indexForRealValues = 2*i;
+    DEBUG_SERIAL.print(srcX[indexForRealValues], 5); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(srcY[indexForRealValues], 5); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(srcZ[indexForRealValues], 5); DEBUG_SERIAL.print(" ");
 
     DEBUG_SERIAL.print(destX[i], 5); DEBUG_SERIAL.print(" "); 
-    DEBUG_SERIAL.print(srcX[indexForRealValues], 5); DEBUG_SERIAL.print(" "); 
     DEBUG_SERIAL.print(destY[i], 5); DEBUG_SERIAL.print(" "); 
-    DEBUG_SERIAL.print(srcY[indexForRealValues], 5); DEBUG_SERIAL.print(" "); 
-    DEBUG_SERIAL.print(destZ[i], 5); DEBUG_SERIAL.print(" "); 
-    DEBUG_SERIAL.println(srcZ[indexForRealValues], 5);
+    DEBUG_SERIAL.print(destZ[i], 5); DEBUG_SERIAL.println(""); 
   }
 
   m_speed=THROTTLE_MAP_START;

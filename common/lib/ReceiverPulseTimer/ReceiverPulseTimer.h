@@ -2,6 +2,7 @@
 #define RECEIVER_PULSE_TIMER
 
 #include <Arduino.h>
+#include "arm_math.h"
 
 static constexpr uint32_t CPU_FREQUENCY_Hz = 600000000;
 static constexpr float32_t TICKS_TO_MICROS = (float32_t)1000000/CPU_FREQUENCY_Hz;
