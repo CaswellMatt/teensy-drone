@@ -18,4 +18,3 @@ latest schematic and PCB design found [HERE](https://easyeda.com/mc18g13/teensy-
 * 12v Battery and Power Distribution Board
 * MPU9250 MARG
 * 1.25 mm jst connectors
-* Power distribution board
