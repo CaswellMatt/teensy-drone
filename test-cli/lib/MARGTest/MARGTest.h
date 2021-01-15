@@ -19,6 +19,11 @@ public:
   virtual void printTitle() override;
 
   void showFilteredVsUnfiltered();
+  void printSensor(Vector (MARG::*dataGetter)());
+  void printRawRotationalRates();
+  void printRawAccelerometer();
+  void printRawMagnetics();
+
 
 };
 
