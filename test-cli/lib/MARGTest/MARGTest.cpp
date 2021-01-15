@@ -12,7 +12,7 @@ const String runFilterMessage = "Run filter on data";
 void MARGTest::setup() {
   addExit(this);
   addOption(this, &MARGTest::showFilteredVsUnfiltered, runFilterMessage);
-  const bool FILTERS_ON = true;
+  const bool FILTERS_ON = false;
   m_marg = new MARG(FILTERS_ON, FILTERS_ON);
 } 
 
@@ -22,7 +22,7 @@ void MARGTest::printTitle() {
 
 void MARGTest::showFilteredVsUnfiltered() {
   static long timer = micros();
-  for (int i = 0; i < 5000; ++i) {
+  for (int i = 0; i < 20000; ++i) {
     m_marg->read();
     Vector rotationalRates    = m_marg->getRotationalRates();
     Vector rotationalRatesRaw = m_marg->getRotationalRatesRaw();

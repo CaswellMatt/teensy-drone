@@ -136,6 +136,10 @@ void MARG::read() {
 
 void MARG::readRaw() {
   m_mpu.read_all();
+
+  // DEBUG_SERIAL.print("accelX max ");DEBUG_SERIAL.println(m_accelerationCalbrationMax.v0);
+  // DEBUG_SERIAL.print("accelY max ");DEBUG_SERIAL.println(m_accelerationCalbrationMax.v1);
+  // DEBUG_SERIAL.print("accelZ max ");DEBUG_SERIAL.println(m_accelerationCalbrationMax.v2);
   
   m_rotationalRatesRaw.v0 = m_mpu.gyro_data[rollAxisIndex];
   m_rotationalRatesRaw.v1 = m_mpu.gyro_data[pitchAxisIndex];

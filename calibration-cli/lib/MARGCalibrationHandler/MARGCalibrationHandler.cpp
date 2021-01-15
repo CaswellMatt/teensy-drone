@@ -130,8 +130,13 @@ void MARGCalibrationHandler::calibrateOneValue(int index, Vector (MARG::*dataGet
 
 void MARGCalibrationHandler::readCalibrationValues() {
   float32_t valueToPrint = 0;
-  for (int i = 0; i < 12; ++i) {
-    EEPROM.get(i * sizeof(float32_t), valueToPrint);
+  for (int i = 0; i < 6; ++i) {
+    EEPROM.get(ACCEL_START + i * sizeof(float32_t), valueToPrint);
+    DEBUG_SERIAL.println(valueToPrint);
+  }
+
+  for (int i = 0; i < 6; ++i) {
+    EEPROM.get(MAG_START + i * sizeof(float32_t), valueToPrint);
     DEBUG_SERIAL.println(valueToPrint);
   }
 }

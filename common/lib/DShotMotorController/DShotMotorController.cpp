@@ -35,7 +35,7 @@ void DShotMotorController::sendPacket(uint16_t frontLeftPacket, uint16_t frontRi
   constexpr uint32_t BIT_MASK_FOR_ALL_OFF = 
     CORE_PIN20_BITMASK | CORE_PIN21_BITMASK | CORE_PIN22_BITMASK | CORE_PIN23_BITMASK;
 
-  // __disable_irq();
+  __disable_irq();
   for (int i = 15; i >= 0; --i)
   {
     uint32_t cyclesStart = ARM_DWT_CYCCNT;
@@ -60,7 +60,7 @@ void DShotMotorController::sendPacket(uint16_t frontLeftPacket, uint16_t frontRi
     while (ARM_DWT_CYCCNT - cyclesStart < DSHOT_TOTAL_PULSE_CLOCK_TICKS);
 
   }
-  // __enable_irq();
+  __enable_irq();
 }
 
 void DShotMotorController::setup() {

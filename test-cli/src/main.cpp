@@ -15,7 +15,7 @@ void setup() {
 
   mainMenu.addOptionHandler(&motorNoiseTest);
   mainMenu.addOptionHandler(&filterTest);
-  // mainMenu.addOptionHandler(&margTest);
+  mainMenu.addOptionHandler(&margTest);
   mainMenu.setup();
 
 }

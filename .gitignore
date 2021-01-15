@@ -3,4 +3,4 @@
 ./.vscode
 ./calibration-cli/.vscode
 ./test-cli/.vscode
-
+noise-test*

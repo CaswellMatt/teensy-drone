@@ -81,12 +81,12 @@ bool Drone::motorsAreActive() {
       const float32_t upperYawThreshold = 
         angularRateForControlRadiansStart +  0.96 * (angularRateForControlRadiansEnd - angularRateForControlRadiansStart);
 
-      float32_t currentYaw = // m_receiverManager.getYaw();
+      float32_t currentYaw =
         m_receiverManager.getYawAligned(
           angularRateForControlRadiansStart,
           angularRateForControlRadiansMiddle,
           angularRateForControlRadiansEnd);
-      Serial.println(currentYaw, 4);
+
       bool yawLowerThanThreshold = currentYaw <= lowerYawThreshold;
       bool yawAboveThreshold = currentYaw >= upperYawThreshold;
       if (yawLowerThanThreshold) {
@@ -158,16 +158,24 @@ void Drone::start() {
   float32_t rollControlInput  = 0;
   float32_t pitchControlInput = 0;
   float32_t yawControlInput   = 0;
-
+  
+  const uint32_t RECEIVER_READ_COUNT_FAIL_SAFE_LIMIT = 2000;
+  uint32_t receiver_read_fail_count = 0;
   while(1) {
 
-    if (m_receiverManager.read()) {
+    if (!m_receiverManager.read()) {
+      receiver_read_fail_count++;
+    } else {
+      receiver_read_fail_count = 0;
+    }
+
+    if (receiver_read_fail_count < RECEIVER_READ_COUNT_FAIL_SAFE_LIMIT) {
       m_orientationFilter.update(LOOPTIME_S);
       // debugPrint();
 
       if (motorsAreActive()) {
 
-        Serial.println("motors are active");
+        // Serial.println("motors are active");
 
         rollControlInput  = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(ROLL_CHANNEL_INDEX));
         pitchControlInput = pulseToRadiansPerSecondControlInput(m_receiverManager.getAligner(PITCH_CHANNEL_INDEX));
@@ -190,6 +198,7 @@ void Drone::start() {
         yawRotationalRateController.update(yawControlInput    , yawRatePositiveNoseLeft);
         
         bool shouldAutoLevel = m_receiverManager.getTopRightSwitch() < MIDPOINT_FOR_RECEIVER_PULSE;
+
         if (shouldAutoLevel) {
           rollAngleController.update(0, m_orientationFilter.getRoll());
           pitchAngleController.update(0, m_orientationFilter.getPitch());
@@ -206,7 +215,6 @@ void Drone::start() {
         static constexpr float32_t throttleToKeepMotorsSpinning = THROTTLE_MAP_START + smallChangeToKeepMotorsSpinning;
 
         float32_t throttlePulse = m_receiverManager.getThrottleAligned(throttleToKeepMotorsSpinning, THROTTLE_MAP_MIDDLE, THROTTLE_MAP_END);
-
         frontLeftPulse  = throttlePulse + rollOutputPID - pitchOutputPID + yawOutputPID;
         frontRightPulse = throttlePulse - rollOutputPID - pitchOutputPID - yawOutputPID;
         backLeftPulse   = throttlePulse + rollOutputPID + pitchOutputPID - yawOutputPID;
@@ -247,13 +255,11 @@ void Drone::start() {
 
       rollAngleController.reset();
       pitchAngleController.reset();
-
       frontLeftPulse  = THROTTLE_MAP_START;
       frontRightPulse = THROTTLE_MAP_START;
       backLeftPulse   = THROTTLE_MAP_START;
       backRightPulse  = THROTTLE_MAP_START;
     }
-
     while(micros() - m_timer < LOOPTIME_US);
     m_timer = micros();
     m_motorController.setSpeed(frontLeftPulse, frontRightPulse, backLeftPulse, backRightPulse);
@@ -280,9 +286,10 @@ void Drone::debugPrint() {
     // DEBUG_SERIAL.print(pitchAngleController.getDerivative(),5); DEBUG_SERIAL.print(" ");
     // DEBUG_SERIAL.print(pitchAngleController.getProportional(),5); DEBUG_SERIAL.print(" ");
 
-    DEBUG_SERIAL.print((uint16_t)m_receiverManager.getRoll()); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(m_receiverManager.getRoll()); DEBUG_SERIAL.print(" ");
     DEBUG_SERIAL.print(m_receiverManager.getPitch()); DEBUG_SERIAL.print(" ");
     DEBUG_SERIAL.print(m_receiverManager.getYaw()); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(m_receiverManager.getThrottle()); DEBUG_SERIAL.print(" ");
 
 
 
