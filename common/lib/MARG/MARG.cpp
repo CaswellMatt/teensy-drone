@@ -21,15 +21,18 @@ namespace  {
 
   const int direction = 1;
 
-  //roll positive right wing down
-  //pitch positive nose down
-  //yaw positive nose left
-  const int gyroXDirection = direction;
-  const int gyroYDirection = direction;
+  //x roll positive right wing down
+  //y pitch positive nose down
+  //z yaw positive nose left
+  const int gyroXDirection = -direction;
+  const int gyroYDirection = -direction;
   const int gyroZDirection = direction;
 
-  const int accelXDirection = direction;
-  const int accelYDirection = direction;
+  //x posiive nose down
+  //y positive left wing down
+  //z positive when upright
+  const int accelXDirection = -direction;
+  const int accelYDirection = -direction;
   const int accelZDirection = direction;
 
 }

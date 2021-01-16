@@ -161,6 +161,20 @@ void Drone::start() {
   
   const uint32_t RECEIVER_READ_COUNT_FAIL_SAFE_LIMIT = 2000;
   uint32_t receiver_read_fail_count = 0;
+
+  auto resetControllersAndStopMotors = [&]() {
+      rollRotationalRateController.reset();
+      pitchRotationalRateController.reset();
+      yawRotationalRateController.reset();
+
+      rollAngleController.reset();
+      pitchAngleController.reset();
+      frontLeftPulse  = THROTTLE_MAP_START;
+      frontRightPulse = THROTTLE_MAP_START;
+      backLeftPulse   = THROTTLE_MAP_START;
+      backRightPulse  = THROTTLE_MAP_START;
+  };
+
   while(1) {
 
     if (!m_receiverManager.read()) {
@@ -171,7 +185,7 @@ void Drone::start() {
 
     if (receiver_read_fail_count < RECEIVER_READ_COUNT_FAIL_SAFE_LIMIT) {
       m_orientationFilter.update(LOOPTIME_S);
-      // debugPrint();
+      debugPrint();
 
       if (motorsAreActive()) {
 
@@ -200,8 +214,8 @@ void Drone::start() {
         bool shouldAutoLevel = m_receiverManager.getTopRightSwitch() < MIDPOINT_FOR_RECEIVER_PULSE;
 
         if (shouldAutoLevel) {
-          rollAngleController.update(0, m_orientationFilter.getRoll());
-          pitchAngleController.update(0, m_orientationFilter.getPitch());
+          rollAngleController.update(0, -m_orientationFilter.getRoll());
+          pitchAngleController.update(0, -m_orientationFilter.getPitch());
         } else {
           rollAngleController.reset();
           pitchAngleController.reset();
@@ -235,30 +249,10 @@ void Drone::start() {
         checkMinMaxOfPulse(backRightPulse);
 
       } else {
-
-        rollRotationalRateController.reset();
-        pitchRotationalRateController.reset();
-        yawRotationalRateController.reset();
-
-        rollAngleController.reset();
-        pitchAngleController.reset();
-
-        frontLeftPulse  = THROTTLE_MAP_START;
-        frontRightPulse = THROTTLE_MAP_START;
-        backLeftPulse   = THROTTLE_MAP_START;
-        backRightPulse  = THROTTLE_MAP_START;
+        resetControllersAndStopMotors();
       }
     } else {
-      rollRotationalRateController.reset();
-      pitchRotationalRateController.reset();
-      yawRotationalRateController.reset();
-
-      rollAngleController.reset();
-      pitchAngleController.reset();
-      frontLeftPulse  = THROTTLE_MAP_START;
-      frontRightPulse = THROTTLE_MAP_START;
-      backLeftPulse   = THROTTLE_MAP_START;
-      backRightPulse  = THROTTLE_MAP_START;
+      resetControllersAndStopMotors();
     }
     while(micros() - m_timer < LOOPTIME_US);
     m_timer = micros();
@@ -272,8 +266,8 @@ void Drone::debugPrint() {
   if (micros() - printTimer > 30000) {
     printTimer = micros();
 
-    // DEBUG_SERIAL.print(m_orientationFilter.getPitch(),5); DEBUG_SERIAL.print(" ");
-    // DEBUG_SERIAL.print(m_orientationFilter.getRoll(),5); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(m_orientationFilter.getPitch(),5); DEBUG_SERIAL.print(" ");
+    DEBUG_SERIAL.print(m_orientationFilter.getRoll(),5); DEBUG_SERIAL.print(" ");
 
     // Serial.print(m_marg.getRotationalRates().v0,5); DEBUG_SERIAL.print(" ");
     // Serial.print(m_marg.getRotationalRates().v1,5); DEBUG_SERIAL.print(" ");
@@ -286,10 +280,10 @@ void Drone::debugPrint() {
     // DEBUG_SERIAL.print(pitchAngleController.getDerivative(),5); DEBUG_SERIAL.print(" ");
     // DEBUG_SERIAL.print(pitchAngleController.getProportional(),5); DEBUG_SERIAL.print(" ");
 
-    DEBUG_SERIAL.print(m_receiverManager.getRoll()); DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(m_receiverManager.getPitch()); DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(m_receiverManager.getYaw()); DEBUG_SERIAL.print(" ");
-    DEBUG_SERIAL.print(m_receiverManager.getThrottle()); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(m_receiverManager.getRoll()); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(m_receiverManager.getPitch()); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(m_receiverManager.getYaw()); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(m_receiverManager.getThrottle()); DEBUG_SERIAL.print(" ");
 
 
 
